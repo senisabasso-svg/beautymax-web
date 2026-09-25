@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { storeConfig } from "@/config/store";
 import { getBrands, getCategories, getProducts } from "@/lib/catalog";
 
+export const dynamic = "force-static";
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = storeConfig.siteUrl.replace(/\/$/, "");
   const staticPaths = ["", "/tienda", "/organic-pro", "/herramientas", "/marcas", "/contacto", "/envios", "/terminos", "/privacidad"];

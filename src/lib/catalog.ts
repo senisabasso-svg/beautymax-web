@@ -18,9 +18,7 @@ export function getProducts() {
 export async function loadCatalog(): Promise<Product[]> {
   const base = getApiUrl();
   try {
-    const res = await fetch(`${base}/products`, {
-      next: { revalidate: 30 },
-    });
+    const res = await fetch(`${base}/products`, { cache: "no-store" });
     if (!res.ok) throw new Error("API catalog error");
     const data = (await res.json()) as Product[];
     if (Array.isArray(data) && data.length > 0) {

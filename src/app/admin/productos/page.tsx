@@ -68,7 +68,7 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="p-3 text-cream/70">{product.variants.length}</td>
                     <td className="p-3 text-right">
-                      <Link href={`/admin/productos/${product.id}`} className="mr-3 text-gold hover:underline">
+                      <Link href={`/admin/productos/editar?id=${product.id}`} className="mr-3 text-gold hover:underline">
                         Editar
                       </Link>
                       <button type="button" className="text-red-400 hover:underline" onClick={() => deactivate(product.id)}>

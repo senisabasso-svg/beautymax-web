@@ -3,8 +3,6 @@ node_modules
 out
 dist
 .vercel
-.open-next
-.wrangler
 .env
 .env.local
 .env*.local

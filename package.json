@@ -10,8 +10,6 @@
     "placeholders": "node scripts/generate-placeholders.mjs",
     "api:dev": "npm --prefix api run dev",
     "api:seed": "npm --prefix api run db:seed",
-    "cf:build": "opennextjs-cloudflare build",
-    "cf:deploy": "opennextjs-cloudflare build && wrangler deploy",
     "export:seed": "npx tsx -e \"import { products } from './src/data/products.ts'; import { writeFileSync } from 'fs'; writeFileSync('api/prisma/seed-products.json', JSON.stringify(products, null, 2)); console.log(products.length);\""
   },
   "dependencies": {

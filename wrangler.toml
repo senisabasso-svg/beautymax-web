@@ -1,7 +1,0 @@
-name = "beautymax-web"
-compatibility_date = "2025-09-24"
-compatibility_flags = ["nodejs_compat"]
-
-[assets]
-directory = ".open-next/assets"
-binding = "ASSETS"

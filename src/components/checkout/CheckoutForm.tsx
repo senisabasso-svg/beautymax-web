@@ -141,29 +141,7 @@ export function CheckoutForm() {
       }
 
       if (storeConfig.enableMercadoPago && values.payment === "mercadopago") {
-        const response = await fetch("/api/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            items: lines.map((line) => ({
-              title: `${line.name} — ${line.variantLabel}`,
-              quantity: line.quantity,
-              unit_price: line.unitPrice,
-            })),
-            payer: { name: order.customer.name, email: order.customer.email },
-            external_reference: order.id,
-          }),
-        });
-        const data = (await response.json()) as { init_point?: string; error?: string };
-        if (!response.ok || !data.init_point) {
-          toast.error(data.error ?? "No pudimos abrir Mercado Pago. Te dejamos el pedido por WhatsApp.");
-        } else {
-          sessionStorage.setItem("beautymax-order", JSON.stringify(order));
-          redeemApplied();
-          clear();
-          window.location.href = data.init_point;
-          return;
-        }
+        toast.message("Mercado Pago se activa en una próxima fase. Seguimos por WhatsApp.");
       }
 
       sessionStorage.setItem("beautymax-order", JSON.stringify(order));
