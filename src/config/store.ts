@@ -1,6 +1,16 @@
 export type PaymentId = "mercadopago" | "transferencia" | "whatsapp";
 export type DeliveryId = "envio" | "retiro";
 
+function resolveSiteUrl() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return "http://localhost:3000";
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return "http://localhost:3000";
+  }
+}
+
 export const storeConfig = {
   name: "Beautymax Distribuidora",
   shortName: "Beautymax",
@@ -52,7 +62,7 @@ export const storeConfig = {
       description: "Coordinamos dirección y horario por WhatsApp",
     },
   ],
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  siteUrl: resolveSiteUrl(),
   enableMercadoPago: process.env.NEXT_PUBLIC_ENABLE_MP === "true",
   /** Ruleta de descuento al entrar: segmentos 10% y 20% */
   discountWheel: {
