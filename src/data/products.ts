@@ -1,0 +1,546 @@
+import type { Product, Variant } from "@/types/product";
+
+/**
+ * Precios placeholder.
+ * Cada número marcado con TODO hay que reemplazarlo por el precio real de lista.
+ */
+function variant(
+  id: string,
+  label: string,
+  price: number,
+  sku: string,
+  stock = 20,
+  extras?: Pick<Variant, "colorName" | "colorHex" | "compareAtPrice">,
+): Variant {
+  return {
+    id,
+    label,
+    price, // TODO precio real
+    sku,
+    stock,
+    ...extras,
+  };
+}
+
+function colorTone(
+  id: string,
+  tone: string,
+  colorHex: string,
+  price: number,
+  sku: string,
+  stock = 15,
+): Variant {
+  return variant(id, tone, price, sku, stock, { colorName: tone, colorHex });
+}
+
+export const products: Product[] = [
+  {
+    id: "pro-you-color-maker",
+    slug: "pro-you-the-color-maker-aloe-vera",
+    name: "Pro You The Color Maker + Aloe Vera",
+    brand: "Pro You",
+    category: "coloracion",
+    shortDescription: "Coloración con aloe vera para un trabajo cómodo en cabina y un tono uniforme.",
+    description:
+      "The Color Maker de Pro You combina la cobertura de una coloración profesional con aloe vera, para trabajar el cabello con más deslizamiento durante la aplicación. Pensada para peluquerías que necesitan un resultado parejo, brillo de salón y un confort real en el lavado.",
+    howToUse:
+      "Mezclá según la proporción indicada por la marca con el oxidante correspondiente al nivel de aclaración. Aplicá sobre cabello seco, respetá el tiempo de pose y enjuagá. Sellá con el tratamiento de cabina que uses habitualmente.",
+    benefits: [
+      "Aplicación cómoda gracias al aloe vera",
+      "Tono uniforme para trabajo de salón",
+      "Brillo visible después del enjuague",
+    ],
+    images: ["/productos/proyou-colormaker-aloe-vera.svg"],
+    variants: [variant("pro-you-color-maker-90", "Tubo 90 ml", 890, "BM-PY-CM-90")],
+    badges: ["mas-vendido"],
+    featured: true,
+  },
+  {
+    id: "pro-you-lifter",
+    slug: "pro-you-the-lifter",
+    name: "Pro You The Lifter",
+    brand: "Pro You",
+    category: "decoloracion",
+    shortDescription: "Decolorante en polvo para aclarados de salón, disponible en balde de 1 kg.",
+    description:
+      "The Lifter es el decolorante de Pro You para aclarados técnicos. El formato de balde rinde en cabina cuando el servicio de mechas, balayage o decoloración global es parte de la agenda del día.",
+    howToUse:
+      "Mezclá el polvo con oxidante hasta obtener una crema estable. Aplicá por zonas según la técnica y controlá el fondo de decoloración. No lo dejes actuar más allá del tiempo recomendado por la marca.",
+    benefits: [
+      "Polvo de alto rendimiento para cabina",
+      "Formato de 1 kg para el trabajo diario",
+      "Aclarado controlado en manos profesionales",
+    ],
+    images: ["/productos/proyou-lifter-balde.svg"],
+    variants: [
+      variant("pro-you-lifter-500", "500 g", 1290, "BM-PY-LF-500"),
+      variant("pro-you-lifter-1000", "1 kg", 2190, "BM-PY-LF-1K"),
+    ],
+    featured: true,
+  },
+  {
+    id: "pro-you-setter",
+    slug: "pro-you-the-setter-hairspray",
+    name: "Pro You The Setter Hairspray",
+    brand: "Pro You",
+    category: "styling",
+    shortDescription: "Laca de fijación profesional para cerrar el peinado sin acartonarlo.",
+    description:
+      "The Setter es la laca de Pro You para terminar brushing, recogidos y peinados de evento. Fija el estilo y deja el cabello con movimiento, lista para que la clienta salga del salón.",
+    howToUse:
+      "Agitá el aerosol y pulverizá a unos 25 cm del cabello, en capas cortas, sobre el peinado ya armado. Para más hold, esperá unos segundos y sumá una segunda pasada.",
+    benefits: [
+      "Fijación de salón sin efecto rígido",
+      "Secado rápido entre pasadas",
+      "Ideal para brushing y recogidos",
+    ],
+    images: ["/productos/proyou-setter-hairspray.svg"],
+    variants: [
+      variant("pro-you-setter-300", "300 ml", 740, "BM-PY-ST-300"),
+      variant("pro-you-setter-500", "500 ml", 980, "BM-PY-ST-500"),
+    ],
+    badges: ["nuevo"],
+  },
+  {
+    id: "plasma-deco-9",
+    slug: "plasma-deco-9-tonos",
+    name: "Plasma Deco 9 Tonos",
+    brand: "Plasma",
+    category: "decoloracion",
+    shortDescription: "Decolorante de hasta 9 tonos para aclarados exigentes en cabina.",
+    description:
+      "Plasma Deco 9 Tonos está pensado para decoloraciones que necesitan llegar lejos sin perder el control del fondo. Una herramienta de cabina para coloristas que trabajan rubios limpios y técnicas de contraste.",
+    howToUse:
+      "Mezclá con el oxidante adecuado a la altura de tono que buscás. Aplicá de forma pareja, vigilá el proceso y retiralo apenas alcances el fondo deseado. Hidratá después del servicio.",
+    benefits: [
+      "Aclaración de hasta 9 tonos",
+      "Polvo estable para técnicas de color",
+      "Resultado pensado para rubios de salón",
+    ],
+    images: ["/productos/plasma-deco-9-tonos.svg"],
+    variants: [variant("plasma-deco-9-500", "Polvo 500 g", 1890, "BM-PL-D9-500")],
+    badges: ["mas-vendido"],
+    featured: true,
+  },
+  {
+    id: "plasma-mix-caja",
+    slug: "plasma-mix-triaminico-caja",
+    name: "Plasma Mix Triamínico",
+    brand: "Plasma",
+    category: "coloracion",
+    shortDescription: "Coloración triamínica en caja para coberturas y tonos de trabajo diario.",
+    description:
+      "Plasma Mix Triamínico es la coloración de cabina para quien busca cobertura y un tono fiel. La caja ordena el servicio y rinde cuando el color es el corazón de la agenda.",
+    howToUse:
+      "Mezclá el contenido con el oxidante indicado. Aplicá raíz y largos según el diagnóstico y respetá el tiempo de pose. Enjuagá hasta que el agua salga limpia.",
+    benefits: [
+      "Fórmula triamínica de uso profesional",
+      "Presentación en caja lista para cabina",
+      "Cobertura pareja en canas y retoques",
+    ],
+    images: ["/productos/plasma-mix-triaminico-box.svg"],
+    variants: [variant("plasma-mix-caja", "Caja", 1490, "BM-PL-MX-CJ")],
+    featured: true,
+  },
+  {
+    id: "plasma-mix-ampolla",
+    slug: "plasma-mix-triaminico-ampolla",
+    name: "Plasma Mix Triamínico Ampolla",
+    brand: "Plasma",
+    category: "coloracion",
+    shortDescription: "La misma coloración triamínica en ampolla, práctica para retoques y pruebas de tono.",
+    description:
+      "La ampolla de Plasma Mix Triamínico sirve para retoques de raíz, pruebas de color y servicios cortos. Misma lógica de trabajo que la caja, en un formato que se abre y se usa al momento.",
+    howToUse:
+      "Abrí la ampolla, mezclá con oxidante en la proporción de la marca y aplicá en la zona a trabajar. Controlá el tiempo y enjuagá.",
+    benefits: [
+      "Formato práctico para retoques",
+      "Menos desperdicio en pruebas de tono",
+      "Color triamínico de cabina",
+    ],
+    images: ["/productos/plasma-mix-triaminico-ampolla.svg"],
+    variants: [variant("plasma-mix-ampolla", "Ampolla", 190, "BM-PL-MX-AM")],
+  },
+  {
+    id: "wella-color-touch",
+    slug: "wella-color-touch",
+    name: "Wella Color Touch",
+    brand: "Wella Professionals",
+    category: "coloracion",
+    shortDescription: "Tonalización y color demipermanente Wella para brillo y reflejo de salón.",
+    description:
+      "Color Touch es el demipermanente de Wella Professionals para refrescar el tono, sumar reflejo o tonalizar un fondo de decoloración. Un clásico de cabina cuando el objetivo es brillo y precisión, sin compromiso permanente.",
+    howToUse:
+      "Mezclá con el activador Color Touch en la proporción indicada por Wella. Aplicá sobre cabello lavado y húmedo, o según el protocolo de tu salón, y respetá el tiempo de pose.",
+    benefits: [
+      "Brillo y reflejo sin levantamiento agresivo",
+      "Ideal para tonalizar después de decolorar",
+      "Marca original Wella Professionals",
+    ],
+    images: ["/productos/wella-color-touch.svg"],
+    variants: [variant("wella-color-touch-60", "Tubo 60 ml", 1120, "BM-WE-CT-60")],
+    badges: ["mas-vendido"],
+    featured: true,
+  },
+  {
+    id: "silkey-colorkey",
+    slug: "silkey-colorkey-milenium",
+    name: "Silkey Colorkey Milenium",
+    brand: "Silkey",
+    category: "coloracion",
+    shortDescription: "Coloración Silkey para el servicio de color del día a día en el salón.",
+    description:
+      "Colorkey Milenium de Silkey es una coloración profesional para coberturas y cambios de tono. Una opción de trabajo para salones que buscan un resultado prolijo y una marca fácil de reponer.",
+    howToUse:
+      "Mezclá con oxidante según el nivel de tono. Aplicá de forma uniforme, respetá el tiempo de pose y enjuagá. Completá con máscara de tratamiento.",
+    benefits: [
+      "Color de uso profesional",
+      "Aplicación pareja en cabina",
+      "Reposición simple para el salón",
+    ],
+    images: ["/productos/silkey-colorkey-milenium.svg"],
+    variants: [variant("silkey-colorkey-60", "Tubo 60 ml", 690, "BM-SK-CK-60")],
+  },
+  {
+    id: "revlon-equave",
+    slug: "revlon-equave-bi-face",
+    name: "Revlon Equave Bi-Face",
+    brand: "Revlon Professional",
+    category: "tratamientos",
+    shortDescription: "Acondicionador bifásico sin enjuague para desenredar, nutrir y dar brillo.",
+    description:
+      "Equave Bi-Face de Revlon Professional es el bifásico de cabina que se usa entre servicios o como cierre. Desenreda, aporta brillo y deja el cabello suave sin apelmazar, incluso cuando viene de color o decoloración.",
+    howToUse:
+      "Agitá hasta integrar las dos fases. Pulverizá sobre cabello lavado y escurrido, o sobre seco para refrescar el brushing. No se enjuaga. Peiná para distribuir.",
+    benefits: [
+      "Desenredo inmediato",
+      "Brillo de salón sin enjuague",
+      "Textura liviana, también en cabello fino",
+    ],
+    images: ["/productos/revlon-equave-bi-face.svg"],
+    variants: [
+      variant("revlon-equave-200", "200 ml", 980, "BM-RV-EQ-200"),
+      variant("revlon-equave-500", "500 ml", 1890, "BM-RV-EQ-500"),
+    ],
+    featured: true,
+  },
+  {
+    id: "op-shine-serum",
+    slug: "organic-pro-shine-serum",
+    name: "Organic Pro Shine Serum Styling",
+    brand: "Organic Pro",
+    category: "styling",
+    shortDescription: "Serum de brillo y control para cerrar el styling sin pesar el cabello.",
+    description:
+      "Shine Serum Styling es el acabado de Organic Pro para brushing, planchado y peinados con movimiento. Sella la superficie, controla el frizz y deja un brillo limpio, de esos que se notan cuando la clienta se mira al salir.",
+    howToUse:
+      "Con el cabello húmedo o seco, distribuí una pequeña cantidad en medios y puntas. Evitá la raíz si el cuero cabelludo es graso. Peiná o secá como de costumbre.",
+    benefits: [
+      "Brillo inmediato de cabina",
+      "Control del frizz sin efecto pesado",
+      "Dos tamaños: tocador y uso profesional",
+    ],
+    images: ["/productos/organic-pro-shine-serum.svg"],
+    variants: [
+      variant("op-shine-30", "30 ml", 690, "BM-OP-SH-30"),
+      variant("op-shine-300", "300 ml", 2490, "BM-OP-SH-300"),
+    ],
+    badges: ["exclusivo", "mas-vendido"],
+    featured: true,
+  },
+  {
+    id: "op-cream",
+    slug: "organic-pro-all-in-one-hair-cream",
+    name: "Organic Pro All In One Hair Cream",
+    brand: "Organic Pro",
+    category: "styling",
+    shortDescription: "Crema multiuso para peinar, definir y dejar el cabello suave al tacto.",
+    description:
+      "All In One Hair Cream reúne en un solo paso lo que el styling de salón pide entre servicio y servicio: suavidad, control y un acabado natural. El formato de 100 ml entra en el puesto de trabajo sin ocupar lugar.",
+    howToUse:
+      "Aplicá sobre cabello húmedo, de medios a puntas, y peiná con los dedos o con cepillo. Sumá calor si buscás un brushing más liso.",
+    benefits: [
+      "Un solo producto para peinar y suavizar",
+      "Acabado natural, sin rigidez",
+      "Textura cómoda para cabina",
+    ],
+    images: ["/productos/organic-pro-all-in-one-cream.svg"],
+    variants: [variant("op-cream-100", "100 ml", 890, "BM-OP-CR-100")],
+    badges: ["exclusivo"],
+  },
+  {
+    id: "op-acid-mask",
+    slug: "organic-pro-acid-mask",
+    name: "Organic Pro Acid Mask",
+    brand: "Organic Pro",
+    category: "tratamientos",
+    shortDescription: "Máscara ácida para sellar la cutícula después del color y la decoloración.",
+    description:
+      "Acid Mask baja el pH después de los servicios químicos y ayuda a cerrar la cutícula. El cabello queda más dócil, con brillo y menos poroso: el cierre que toda cabina necesita antes de secar.",
+    howToUse:
+      "Después del lavado, aplicá de medios a puntas sobre cabello escurrido. Dejá actuar de 5 a 10 minutos y enjuagá. En cabello muy procesado, podés extender el tiempo dentro de lo que indique el protocolo del salón.",
+    benefits: [
+      "Sella la cutícula después del químico",
+      "Brillo y tacto más liviano",
+      "Formatos de 400 g y 1 kg para cabina",
+    ],
+    images: ["/productos/organic-pro-acid-mask.svg"],
+    variants: [
+      variant("op-acid-400", "400 g", 1490, "BM-OP-AC-400"),
+      variant("op-acid-1000", "1 kg", 3290, "BM-OP-AC-1K"),
+    ],
+    badges: ["exclusivo"],
+    featured: true,
+  },
+  {
+    id: "op-colageno",
+    slug: "organic-pro-colageno-acido-hialuronico",
+    name: "Organic Pro Colágeno & Ácido Hialurónico",
+    brand: "Organic Pro",
+    category: "tratamientos",
+    shortDescription: "Tratamiento de colágeno y ácido hialurónico para cuerpo, elasticidad y sedosidad.",
+    description:
+      "La máscara de colágeno y ácido hialurónico de Organic Pro está pensada para cabellos que perdieron cuerpo. Aporta elasticidad y un tacto sedoso, con la lógica de un tratamiento de cabina que la clienta nota al peinarse.",
+    howToUse:
+      "Lavá con el shampoo de la línea. Aplicá la máscara generosamente, dejá actuar de 8 a 12 minutos con o sin calor y enjuagá. Secá como cierre del servicio.",
+    benefits: [
+      "Colágeno y ácido hialurónico en cabina",
+      "Más cuerpo y elasticidad",
+      "Tacto sedoso después del enjuague",
+    ],
+    images: ["/productos/organic-pro-colageno.svg"],
+    variants: [
+      variant("op-colageno-400", "400 g", 1590, "BM-OP-CH-400"),
+      variant("op-colageno-1000", "1 kg", 3490, "BM-OP-CH-1K"),
+    ],
+    badges: ["exclusivo"],
+    featured: true,
+  },
+  {
+    id: "op-curl",
+    slug: "organic-pro-curl-cream",
+    name: "Organic Pro Curl Cream Rulos",
+    brand: "Organic Pro",
+    category: "styling",
+    shortDescription: "Crema de rulos para definir la onda sin endurecerla.",
+    description:
+      "Curl Cream Rulos define la onda y controla el frizz en cabellos rizados y ondulados. El acabado queda flexible, con rulos marcados y movimiento, listo para salir de la cabina.",
+    howToUse:
+      "Sobre cabello lavado y húmedo, distribuí la crema por secciones. Definí con los dedos o con peine ancho y secá al aire o con difusor.",
+    benefits: [
+      "Definición flexible del rulo",
+      "Menos frizz a lo largo del día",
+      "Formato de 300 ml para el puesto de styling",
+    ],
+    images: ["/productos/organic-pro-curl-cream.svg"],
+    variants: [variant("op-curl-300", "300 ml", 1290, "BM-OP-CU-300")],
+    badges: ["exclusivo", "nuevo"],
+  },
+  {
+    id: "op-lumina",
+    slug: "organic-pro-lumina-keratina-violet",
+    name: "Organic Pro Lumina Keratina Violet",
+    brand: "Organic Pro",
+    category: "tratamientos",
+    shortDescription: "Keratina violeta para neutralizar el amarillo y alisar el reflejo en rubios.",
+    description:
+      "Lumina Keratina Violet trabaja el reflejo no deseado de los rubios y, al mismo tiempo, aporta la suavidad de una keratina de salón. Es la máscara que se usa cuando el fondo quedó cálido y el cabello pide nutrición.",
+    howToUse:
+      "Aplicá sobre cabello lavado y húmedo, de medios a puntas. Dejá actuar de 5 a 15 minutos según la intensidad del reflejo que quieras matizar. Enjuagá y seguí con el styling.",
+    benefits: [
+      "Pigmento violeta para rubios cálidos",
+      "Nutrición de keratina en el mismo paso",
+      "Control del tono entre visitas",
+    ],
+    images: ["/productos/organic-pro-lumina-violet.svg"],
+    variants: [
+      variant("op-lumina-400", "400 g", 1890, "BM-OP-LV-400"),
+      variant("op-lumina-1000", "1 kg", 3990, "BM-OP-LV-1K"),
+    ],
+    badges: ["exclusivo"],
+    featured: true,
+  },
+  {
+    id: "op-silver",
+    slug: "organic-pro-silver-keratina-black",
+    name: "Organic Pro Silver Keratina Black",
+    brand: "Organic Pro",
+    category: "tratamientos",
+    shortDescription: "Keratina con pigmento negro para profundizar castaños y cubrir el apagado.",
+    description:
+      "Silver Keratina Black realza los castaños y los negros que perdieron profundidad. El pigmento oscuro devuelve intensidad y la keratina deja el cabello más dócil para el secado.",
+    howToUse:
+      "Aplicá sobre cabello húmedo después del shampoo. Dejá actuar de 5 a 10 minutos. En cabellos porosos, controlá el color para no sobrecargar el tono. Enjuagá bien.",
+    benefits: [
+      "Profundiza castaños y negros",
+      "Keratina para un tacto más suave",
+      "Mantenimiento de tono entre coloraciones",
+    ],
+    images: ["/productos/organic-pro-silver-black.svg"],
+    variants: [
+      variant("op-silver-400", "400 g", 1890, "BM-OP-SB-400"),
+      variant("op-silver-1000", "1 kg", 3990, "BM-OP-SB-1K"),
+    ],
+    badges: ["exclusivo"],
+  },
+  {
+    id: "op-shampoo-aio",
+    slug: "organic-pro-shampoo-acondicionador",
+    name: "Organic Pro Shampoo & Acondicionador All In One",
+    brand: "Organic Pro",
+    category: "tratamientos",
+    shortDescription: "Limpieza y acondicionamiento en un solo paso, en formato de 1 litro para cabina.",
+    description:
+      "El All In One de Organic Pro lava y acondiciona en el mismo gesto. En un salón con agenda llena, ese minuto menos en la bacha se nota, sin resignar un cabello suave y desenredado.",
+    howToUse:
+      "Aplicá sobre cabello mojado, masajeá el cuero cabelludo y distribuí el resto en los largos. Dejá actuar un minuto y enjuagá. Si el cabello está muy procesado, completá con máscara.",
+    benefits: [
+      "Shampoo y acondicionador juntos",
+      "Formato de 1 L para el lavadero",
+      "Cabello suave y fácil de peinar",
+    ],
+    images: ["/productos/organic-pro-shampoo-all-in-one.svg"],
+    variants: [variant("op-aio-1000", "1 L", 2190, "BM-OP-AI-1L")],
+    badges: ["exclusivo"],
+  },
+  {
+    id: "op-tonico",
+    slug: "organic-pro-shampoo-tonico",
+    name: "Organic Pro Shampoo Tónico",
+    brand: "Organic Pro",
+    category: "tratamientos",
+    shortDescription: "Sin sal. Anticaída y engrosamiento para cabina profesional.",
+    description:
+      "Shampoo Tónico de Organic Pro está formulado sin sal, con una propuesta de anticaída y engrosamiento para el trabajo profesional. Limpia el cuero cabelludo sin castigarlo y prepara el cabello para el resto del servicio.",
+    howToUse:
+      "Aplicá sobre cuero cabelludo húmedo con un masaje suave de un minuto. Enjuagá y, si el protocolo del salón lo pide, repetí. Continuá con la máscara o el tónico de tratamiento.",
+    benefits: [
+      "Fórmula sin sal",
+      "Enfoque anticaída y de engrosamiento",
+      "Pensado para el lavado de cabina",
+    ],
+    images: ["/productos/organic-pro-shampoo-tonico.svg"],
+    variants: [variant("op-tonico-300", "300 ml", 980, "BM-OP-TN-300")],
+    badges: ["exclusivo"],
+    featured: true,
+  },
+  {
+    id: "kiepe-monster",
+    slug: "kiepe-monster-cut",
+    name: "Kiepe Italia Monster Cut",
+    brand: "Kiepe Italia",
+    category: "tijeras",
+    shortDescription: "Calidad 4 estrellas, acero japonés y filo de navaja. Modelo para diestros y zurdos.",
+    description:
+      "Monster Cut es la tijera de corte de Kiepe Italia para quien trabaja todo el día con la herramienta en la mano. Acero japonés, filo de navaja y calidad 4 estrellas. Hay versión para diestros y para zurdos, para que la ergonomía acompañe el gesto de cada profesional.",
+    howToUse:
+      "Usala para corte en seco o húmedo según tu técnica. Limpiá el filo después de cada servicio, lubricá el tornillo y guardala cerrada en su estuche. Afilado sólo con un servicio especializado.",
+    benefits: [
+      "Acero japonés y filo de navaja",
+      "Calidad 4 estrellas Kiepe",
+      "Versión para diestros y para zurdos",
+    ],
+    images: ["/productos/kiepe-monster-cut.svg"],
+    variants: [
+      variant("kiepe-monster-r", "Diestro", 8900, "BM-KP-MC-R", 8),
+      variant("kiepe-monster-l", "Zurdo", 8900, "BM-KP-MC-L", 6),
+    ],
+    badges: ["mas-vendido"],
+    featured: true,
+  },
+  {
+    id: "kiepe-entresacar",
+    slug: "kiepe-entresacar-monster-cut",
+    name: "Kiepe Entresacar Monster Cut",
+    brand: "Kiepe Italia",
+    category: "tijeras",
+    shortDescription: "Tijera de entresacar de la línea Monster Cut, para vaciar sin marcar líneas.",
+    description:
+      "La entresacar Monster Cut acompaña a la tijera de corte cuando hay que quitar peso, fundir un contorno o texturizar. Mismo lenguaje de herramienta Kiepe: acero japonés y un filo pensado para el trabajo fino.",
+    howToUse:
+      "Trabajá en secciones, entrando en el mechón con el ángulo de tu técnica. Limpiá los dientes después del servicio para que no queden restos de cabello.",
+    benefits: [
+      "Texturiza y quita peso sin líneas duras",
+      "Línea Monster Cut",
+      "Acero japonés de uso profesional",
+    ],
+    images: ["/productos/kiepe-entresacar.svg"],
+    variants: [variant("kiepe-entresacar-std", "Estándar", 7200, "BM-KP-EN-ST", 8)],
+  },
+  {
+    id: "kiepe-procut",
+    slug: "kiepe-procut",
+    name: "Kiepe Procut",
+    brand: "Kiepe Italia",
+    category: "tijeras",
+    shortDescription: "Tijera de corte Procut para el trabajo preciso del día a día.",
+    description:
+      "Procut es la tijera Kiepe para el corte cotidiano del salón: precisa, equilibrada y lista para una agenda completa. Elegí la medida según el largo de hoja con el que trabajás.",
+    howToUse:
+      "Ajustá el tornillo a tu tensión de trabajo. Limpiá y lubricá al cerrar el día. No la uses para cortar otro material que no sea cabello.",
+    benefits: [
+      "Corte preciso de uso diario",
+      "Dos medidas de hoja",
+      "Herramienta Kiepe Italia",
+    ],
+    images: ["/productos/kiepe-procut.svg"],
+    variants: [
+      variant("kiepe-procut-55", '5.5"', 6400, "BM-KP-PC-55", 8),
+      variant("kiepe-procut-60", '6"', 6800, "BM-KP-PC-60", 8),
+    ],
+    featured: true,
+  },
+  {
+    id: "hepike-machine",
+    slug: "hepike-by-kiepe",
+    name: "Máquina Hepike by Kiepe",
+    brand: "Kiepe Italia",
+    category: "maquinas",
+    shortDescription: "Máquina de corte Hepike by Kiepe para fade, contorno y el trabajo de barbería.",
+    description:
+      "Hepike by Kiepe es la máquina para el puesto de barbería y peluquería que necesita potencia pareja y un corte limpio en fade, contorno y nuca. Una herramienta de la familia Kiepe, con repuestos y asesoramiento desde Beautymax.",
+    howToUse:
+      "Cargala por completo antes del servicio. Aceitá las cuchillas, limpiá el cabello acumulado y ajustá el peine al largo que vas a trabajar. Guardala con la cuchilla limpia.",
+    benefits: [
+      "Corte limpio para fade y contorno",
+      "Línea Hepike by Kiepe",
+      "Asesoramiento de herramienta en Beautymax",
+    ],
+    images: ["/productos/hepike-by-kiepe.svg"],
+    variants: [variant("hepike-machine", "Máquina", 7900, "BM-KP-HP-01", 10)],
+    badges: ["nuevo"],
+    featured: true,
+  },
+  {
+    id: "beautymax-color-studio",
+    slug: "beautymax-color-studio-ejemplo",
+    name: "Beautymax Color Studio",
+    brand: "Beautymax",
+    category: "coloracion",
+    shortDescription:
+      "Coloración de ejemplo con varios tonos. Elegí cuántos tubos de cada número: por ejemplo 4 del 7.1 y 3 del 7.3.",
+    description:
+      "Color Studio simula una carta de tintas como Revlon u otras marcas con muchos tonos. En el salón la clienta o la profesional elige varios números a la vez — como cuando pedís 4 del tono 3 y 3 del tono 7 — y todo entra al carrito en un solo paso.",
+    howToUse:
+      "Elegí cada tono con la cantidad de tubos. Sumá al carrito y seguí con el resto del pedido. Este ítem es de ejemplo: la carta real se carga con los códigos de la marca.",
+    benefits: [
+      "Varios tonos en la misma ficha",
+      "Cantidad distinta por cada número",
+      "Se suman todos juntos al carrito",
+    ],
+    images: ["/productos/beautymax-color-studio.svg"],
+    variants: [
+      colorTone("bm-cs-1-0", "1.0 Negro", "#0D0D0D", 980, "BM-CS-10"),
+      colorTone("bm-cs-3-0", "3.0 Castaño oscuro", "#1A100C", 980, "BM-CS-30"),
+      colorTone("bm-cs-4-0", "4.0 Castaño", "#2C1810", 980, "BM-CS-40", 0),
+      colorTone("bm-cs-5-5", "5.5 Castaño caoba", "#4A1F28", 980, "BM-CS-55"),
+      colorTone("bm-cs-6-0", "6.0 Rubio oscuro", "#5A3A22", 980, "BM-CS-60"),
+      colorTone("bm-cs-7-1", "7.1 Rubio ceniza", "#8B7355", 980, "BM-CS-71"),
+      colorTone("bm-cs-7-3", "7.3 Rubio dorado", "#B8843C", 980, "BM-CS-73"),
+      colorTone("bm-cs-8-0", "8.0 Rubio claro", "#C9A66B", 980, "BM-CS-80"),
+    ],
+    badges: ["nuevo"],
+    featured: true,
+    requiresSelection: true,
+  },
+];

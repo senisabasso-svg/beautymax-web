@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Product {
+  id                String    @id @default(cuid())
+  slug              String    @unique
+  name              String
+  brand             String
+  category          String
+  shortDescription  String
+  description       String
+  howToUse          String?
+  benefits          String[]  @default([])
+  images            String[]  @default([])
+  badges            String[]  @default([])
+  featured          Boolean   @default(false)
+  requiresSelection Boolean   @default(false)
+  active            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  variants          Variant[]
+  orderItems        OrderItem[]
+}
+
+model Variant {
+  id             String      @id @default(cuid())
+  productId      String
+  product        Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label          String
+  price          Int
+  compareAtPrice Int?
+  sku            String?
+  stock          Int         @default(0)
+  colorName      String?
+  colorHex       String?
+  sortOrder      Int         @default(0)
+  orderItems     OrderItem[]
+
+  @@index([productId])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  publicId        String      @unique
+  status          String      @default("nuevo")
+  customerName    String
+  customerPhone   String
+  customerEmail   String
+  customerSalon   String?
+  department      String
+  city            String
+  address         String?
+  delivery        String
+  payment         String
+  subtotal        Int
+  discount        Int         @default(0)
+  discountCode    String?
+  discountPercent Int?
+  shipping        Int         @default(0)
+  total           Int
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId  String?
+  variant    Variant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  name       String
+  brand      String
+  variantLabel String
+  sku        String?
+  quantity   Int
+  unitPrice  Int
+  lineTotal  Int
+
+  @@index([orderId])
+}
+
+model PromoCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  percent   Int
+  source    String    @default("wheel")
+  usedAt    DateTime?
+  orderId   String?
+  createdAt DateTime  @default(now())
+
+  @@index([code])
+}

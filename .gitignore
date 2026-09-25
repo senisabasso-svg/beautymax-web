@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+dist
+.vercel
+.open-next
+.wrangler
+.env
+.env.local
+.env*.local
+api/.env
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
