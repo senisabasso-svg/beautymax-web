@@ -19,6 +19,7 @@ import { buildOrderMessage, createOrderId, whatsappUrl, type OrderPayload } from
 import { cn } from "@/lib/utils";
 import { PromoCodeField } from "@/components/promo/PromoCodeField";
 import { useCart } from "@/store/cart-store";
+import { useClientAuth } from "@/store/client-auth-store";
 import { useAppliedPromo, usePromo } from "@/store/promo-store";
 
 const schema = z
@@ -46,6 +47,7 @@ export function CheckoutForm() {
   const items = useCart((state) => state.items);
   const clear = useCart((state) => state.clear);
   const promo = useAppliedPromo();
+  const clientToken = useClientAuth((state) => state.token);
   const redeemApplied = usePromo((state) => state.redeemApplied);
   const lines = useMemo(() => resolveCart(items), [items]);
   const [pending, setPending] = useState(false);
@@ -115,6 +117,7 @@ export function CheckoutForm() {
         const { apiFetch } = await import("@/lib/api/client");
         const saved = await apiFetch<{ id: string }>("/orders", {
           method: "POST",
+          ...(clientToken ? { token: clientToken } : {}),
           body: JSON.stringify({
             customer: {
               name: values.name.trim(),

@@ -22,6 +22,7 @@ type ClientRow = {
   createdAt: string;
   hasActiveDiscount: boolean;
   activeDiscount: { code: string; percent: number } | null;
+  referredBy: { id: string; name: string; salonName: string } | null;
 };
 
 type Tab = "pending" | "active";
@@ -90,7 +91,7 @@ export default function AdminClientsPage() {
       setClients((list) =>
         list.map((c) =>
           c.id === client.id
-            ? { ...result.client, phone: client.phone, name: client.name }
+            ? { ...result.client, phone: client.phone, name: client.name, referredBy: client.referredBy }
             : c,
         ),
       );
@@ -166,6 +167,12 @@ export default function AdminClientsPage() {
                     <div>
                       <h2 className="font-serif text-xl text-cream">{client.name}</h2>
                       <p className="mt-1 text-sm text-cream/60">{client.salonName}</p>
+                      {client.referredBy ? (
+                        <p className="mt-2 text-sm text-gold">
+                          Pidió el alta gracias a {client.referredBy.name}
+                          {client.referredBy.salonName ? ` · ${client.referredBy.salonName}` : ""}
+                        </p>
+                      ) : null}
                     </div>
                     {client.hasActiveDiscount && client.activeDiscount ? (
                       <span className="rounded-sm bg-gold/15 px-2 py-1 text-xs font-semibold text-gold">

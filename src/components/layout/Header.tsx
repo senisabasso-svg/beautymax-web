@@ -56,14 +56,22 @@ export function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-1 lg:ml-0">
           {token && client?.status === "active" ? (
-            <button
-              type="button"
-              onClick={clearSession}
-              className="hidden max-w-[9rem] truncate text-[10px] font-medium uppercase tracking-[0.12em] text-gold/80 hover:text-gold sm:inline"
-              title={client.email ?? client.name}
-            >
-              {client.name.split(" ")[0]} · salir
-            </button>
+            <div className="hidden items-center gap-3 sm:flex">
+              <Link
+                href="/perfil"
+                className="max-w-[9rem] truncate text-[10px] font-medium uppercase tracking-[0.12em] text-gold/80 hover:text-gold"
+                title={client.email ?? client.name}
+              >
+                Mi perfil
+              </Link>
+              <button
+                type="button"
+                onClick={clearSession}
+                className="text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 hover:text-gold"
+              >
+                Salir
+              </button>
+            </div>
           ) : (
             <button
               type="button"
@@ -119,16 +127,25 @@ export function Header() {
               ))}
             </nav>
             {token && client?.status === "active" ? (
-              <button
-                type="button"
-                className="mt-6 text-left text-sm text-gold"
-                onClick={() => {
-                  clearSession();
-                  setMenuOpen(false);
-                }}
-              >
-                Cerrar sesión ({client.name})
-              </button>
+              <div className="mt-6 flex flex-col gap-3">
+                <Link
+                  href="/perfil"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-left text-sm text-gold"
+                >
+                  Mi perfil
+                </Link>
+                <button
+                  type="button"
+                  className="text-left text-sm text-white/70"
+                  onClick={() => {
+                    clearSession();
+                    setMenuOpen(false);
+                  }}
+                >
+                  Cerrar sesión ({client.name})
+                </button>
+              </div>
             ) : (
               <div className="mt-6 flex flex-col gap-2">
                 <button

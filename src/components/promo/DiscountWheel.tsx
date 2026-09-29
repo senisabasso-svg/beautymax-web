@@ -74,6 +74,8 @@ export function DiscountWheel() {
   const [loginPassword, setLoginPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [blockedMsg, setBlockedMsg] = useState<string | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [invitePending, setInvitePending] = useState(false);
   const spinDuration = reduce ? 1.4 : 8.2;
   const total = Math.max(segments.length, 1);
   const SEGMENT = 360 / total;
@@ -94,10 +96,14 @@ export function DiscountWheel() {
   useEffect(() => {
     if (!ready || !enabled) return;
     const timer = window.setTimeout(() => {
+      const ref = new URLSearchParams(window.location.search).get("ref")?.trim().toUpperCase();
+      if (ref) window.sessionStorage.setItem("bm-referral", ref);
+      const savedRef = ref || window.sessionStorage.getItem("bm-referral");
+      const loggedIn = Boolean(useClientAuth.getState().token);
       setWon(null);
       setSpinning(false);
       setRotation(0);
-      setAuthMode(null);
+      setAuthMode(savedRef && !loggedIn ? "register" : null);
       setBlockedMsg(null);
       setOpen(true);
     }, 700);
@@ -125,10 +131,15 @@ export function DiscountWheel() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const referralCode = window.sessionStorage.getItem("bm-referral")?.trim();
       await apiFetch("/clients/register", {
         method: "POST",
-        body: JSON.stringify(registerForm),
+        body: JSON.stringify({
+          ...registerForm,
+          ...(referralCode ? { referralCode } : {}),
+        }),
       });
+      window.sessionStorage.removeItem("bm-referral");
       toast.success("Solicitud enviada. Te avisaremos cuando seas aceptado.");
       setRegisterForm(emptyRegister);
       setAuthMode(null);
@@ -244,6 +255,31 @@ export function DiscountWheel() {
     applyCode(won.code);
     toast.success(`Código ${won.code} listo para el carrito`);
     close();
+  }
+
+  async function shareInvite() {
+    if (!token) return;
+    setInvitePending(true);
+    try {
+      const result = await apiFetch<{ code: string; percent: number }>("/clients/me/referral-link", {
+        method: "POST",
+        token,
+      });
+      const url = `${window.location.origin}/?ref=${result.code}`;
+      const message = `Registrate en Beautymax con mi invitación y pedí tu alta de cliente: ${url}`;
+      setInviteUrl(url);
+      if (navigator.share) {
+        await navigator.share({ title: "Invitación Beautymax", text: message, url });
+      } else {
+        await navigator.clipboard?.writeText(url);
+        toast.success("Link copiado");
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      toast.error(err instanceof ApiError ? err.message : "No se pudo generar el link");
+    } finally {
+      setInvitePending(false);
+    }
   }
 
   function copyCode() {
@@ -653,7 +689,37 @@ export function DiscountWheel() {
                       <p className="mt-3 hidden text-[11px] uppercase tracking-[0.18em] text-white/45 sm:block">
                         Solo profesionales · un código hasta usarlo
                       </p>
-                      {token && client?.status === "active" ? null : (
+                      {token && client?.status === "active" ? (
+                        <div className="mt-4">
+                          <button
+                            type="button"
+                            className="text-xs text-gold/90 underline-offset-2 hover:underline"
+                            disabled={invitePending}
+                            onClick={() => void shareInvite()}
+                          >
+                            {invitePending ? "Generando link..." : "Generar link para un amigo"}
+                          </button>
+                          {inviteUrl ? (
+                            <p className="mx-auto mt-2 max-w-xs break-all text-[11px] leading-relaxed text-white/55">
+                              {inviteUrl}
+                              <button
+                                type="button"
+                                className="mt-1 block w-full text-gold/80 underline-offset-2 hover:underline"
+                                onClick={() => {
+                                  const message = `Registrate en Beautymax con mi invitación: ${inviteUrl}`;
+                                  window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+                                }}
+                              >
+                                Enviar por WhatsApp
+                              </button>
+                            </p>
+                          ) : (
+                            <p className="mt-2 text-[11px] leading-relaxed text-white/45">
+                              Si se registra con tu link, te damos un 10% OFF en Mi perfil.
+                            </p>
+                          )}
+                        </div>
+                      ) : (
                         <button
                           type="button"
                           className="mt-3 text-xs text-gold/80 underline-offset-2 hover:underline"

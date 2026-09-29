@@ -39,6 +39,20 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export function readClientId(req: Request) {
+  const token = readBearer(req);
+  if (!token) return null;
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return null;
+  try {
+    const payload = jwt.verify(token, secret) as AuthPayload;
+    if (payload.role !== "client") return null;
+    return payload.sub;
+  } catch {
+    return null;
+  }
+}
+
 export function requireClient(req: Request, res: Response, next: NextFunction) {
   const token = readBearer(req);
   if (!token) {

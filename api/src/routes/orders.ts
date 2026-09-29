@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
-import { requireAuth } from "../middleware/auth.js";
+import { readClientId, requireAuth } from "../middleware/auth.js";
 
 export const ordersRouter = Router();
 
@@ -100,6 +100,16 @@ ordersRouter.post("/", async (req, res) => {
     promoId = promo.id;
   }
 
+  const rawClientId = readClientId(req);
+  let linkedClientId: string | null = null;
+  if (rawClientId) {
+    const buyer = await prisma.client.findUnique({
+      where: { id: rawClientId },
+      select: { id: true, status: true },
+    });
+    if (buyer?.status === "active") linkedClientId = buyer.id;
+  }
+
   const shippingCost = Number(process.env.SHIPPING_COST ?? 350);
   const freeFrom = Number(process.env.FREE_SHIPPING_FROM ?? 8000);
   const shipping =
@@ -134,6 +144,7 @@ ordersRouter.post("/", async (req, res) => {
         shipping,
         total,
         notes: data.notes ?? null,
+        clientId: linkedClientId,
         items: { create: lines },
       },
       include: { items: true },

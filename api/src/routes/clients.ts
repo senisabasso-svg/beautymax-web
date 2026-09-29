@@ -7,6 +7,8 @@ import { requireAuth, requireClient } from "../middleware/auth.js";
 
 export const clientsRouter = Router();
 
+const REFERRAL_PERCENT = 10;
+
 const registerSchema = z.object({
   name: z.string().min(2).max(120),
   document: z.string().min(5).max(30),
@@ -14,6 +16,7 @@ const registerSchema = z.object({
   city: z.string().min(2).max(80),
   phone: z.string().min(8).max(30),
   salonName: z.string().min(2).max(120),
+  referralCode: z.string().min(4).max(20).optional(),
 });
 
 const loginSchema = z.object({
@@ -38,12 +41,15 @@ function serializeClient(
       id: string;
       code: string;
       percent: number;
+      source?: string;
       usedAt: Date | null;
       createdAt: Date;
     }>;
+    referredBy?: { id: string; name: string; salonName: string } | null;
   },
 ) {
-  const activePromo = client.promoCodes?.find((p) => !p.usedAt) ?? null;
+  const activePromo =
+    client.promoCodes?.find((p) => !p.usedAt && p.source !== "referral") ?? null;
   return {
     id: client.id,
     name: client.name,
@@ -64,7 +70,52 @@ function serializeClient(
           createdAt: activePromo.createdAt,
         }
       : null,
+    referredBy: client.referredBy
+      ? {
+          id: client.referredBy.id,
+          name: client.referredBy.name,
+          salonName: client.referredBy.salonName,
+        }
+      : null,
   };
+}
+
+function makePromoCode(percent: number) {
+  const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `BM${percent}-${suffix}`;
+}
+
+function makeReferralCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < 6; i += 1) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return out;
+}
+
+async function ensureReferralCode(clientId: string) {
+  const current = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { referralCode: true, status: true },
+  });
+  if (!current || current.status !== "active") return null;
+  if (current.referralCode) return current.referralCode;
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const referralCode = makeReferralCode();
+    try {
+      const updated = await prisma.client.update({
+        where: { id: clientId },
+        data: { referralCode },
+        select: { referralCode: true },
+      });
+      return updated.referralCode;
+    } catch {
+      // código repetido: reintentar
+    }
+  }
+  return null;
 }
 
 function makePassword(length = 10) {
@@ -117,7 +168,35 @@ clientsRouter.post("/register", async (req, res) => {
     });
   }
 
-  const created = await prisma.client.create({ data });
+  const rawRef = parsed.data.referralCode?.trim().toUpperCase();
+  const referrer = rawRef
+    ? await prisma.client.findFirst({
+        where: { referralCode: rawRef, status: "active" },
+        select: { id: true },
+      })
+    : null;
+
+  const created = await prisma.$transaction(async (tx) => {
+    const client = await tx.client.create({
+      data: {
+        ...data,
+        referredById: referrer?.id ?? null,
+      },
+    });
+    if (referrer) {
+      await tx.promoCode.create({
+        data: {
+          code: makePromoCode(REFERRAL_PERCENT),
+          percent: REFERRAL_PERCENT,
+          source: "referral",
+          clientId: referrer.id,
+          referredClientId: client.id,
+        },
+      });
+    }
+    return client;
+  });
+
   return res.status(201).json({
     id: created.id,
     status: created.status,
@@ -171,13 +250,102 @@ clientsRouter.get("/me", requireClient, async (req, res) => {
   return res.json(serializeClient(client));
 });
 
+clientsRouter.post("/me/referral-link", requireClient, async (req, res) => {
+  const code = await ensureReferralCode(req.client!.sub);
+  if (!code) return res.status(403).json({ error: "Solo clientes activos pueden invitar" });
+  return res.json({ code, percent: REFERRAL_PERCENT });
+});
+
+clientsRouter.get("/me/profile", requireClient, async (req, res) => {
+  const client = await prisma.client.findUnique({
+    where: { id: req.client!.sub },
+    include: {
+      promoCodes: { orderBy: { createdAt: "desc" } },
+      referrals: {
+        select: { id: true, name: true, salonName: true, status: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+  if (!client || client.status !== "active") {
+    return res.status(401).json({ error: "Cliente no disponible" });
+  }
+
+  const referralCode = await ensureReferralCode(client.id);
+
+  const orders = await prisma.order.findMany({
+    where: {
+      OR: [
+        { clientId: client.id },
+        ...(client.email
+          ? [{ customerEmail: { equals: client.email, mode: "insensitive" as const } }]
+          : []),
+      ],
+    },
+    include: { items: true },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
+  const rewardByReferral = new Map(
+    client.promoCodes
+      .filter((promo) => promo.source === "referral" && promo.referredClientId)
+      .map((promo) => [promo.referredClientId, promo]),
+  );
+
+  return res.json({
+    client: serializeClient(client),
+    referralCode,
+    referralPercent: REFERRAL_PERCENT,
+    referrals: client.referrals.map((referral) => {
+      const reward = rewardByReferral.get(referral.id);
+      return {
+        id: referral.id,
+        name: referral.name,
+        salonName: referral.salonName,
+        status: referral.status,
+        createdAt: referral.createdAt,
+        reward: reward
+          ? {
+              code: reward.code,
+              percent: reward.percent,
+              usedAt: reward.usedAt,
+            }
+          : null,
+      };
+    }),
+    orders: orders.map((order) => ({
+      id: order.id,
+      publicId: order.publicId,
+      status: order.status,
+      createdAt: order.createdAt,
+      delivery: order.delivery,
+      payment: order.payment,
+      department: order.department,
+      city: order.city,
+      address: order.address,
+      shipping: order.shipping,
+      discount: order.discount,
+      total: order.total,
+      items: order.items.map((item) => ({
+        name: item.name,
+        brand: item.brand,
+        variantLabel: item.variantLabel,
+        quantity: item.quantity,
+        lineTotal: item.lineTotal,
+      })),
+    })),
+  });
+});
+
 clientsRouter.get("/", requireAuth, async (req, res) => {
   const status = typeof req.query.status === "string" ? req.query.status : undefined;
   const clients = await prisma.client.findMany({
     where: status ? { status } : undefined,
     include: {
+      referredBy: { select: { id: true, name: true, salonName: true } },
       promoCodes: {
-        where: { usedAt: null },
+        where: { usedAt: null, source: { not: "referral" } },
         orderBy: { createdAt: "desc" },
         take: 1,
       },
@@ -236,6 +404,9 @@ clientsRouter.patch("/:id/approve", requireAuth, async (req, res) => {
 clientsRouter.patch("/:id/reject", requireAuth, async (req, res) => {
   const client = await prisma.client.findUnique({ where: { id: req.params.id } });
   if (!client) return res.status(404).json({ error: "Cliente no encontrado" });
+  await prisma.promoCode.deleteMany({
+    where: { referredClientId: client.id, usedAt: null },
+  });
   await prisma.client.delete({ where: { id: client.id } });
   return res.json({ ok: true });
 });

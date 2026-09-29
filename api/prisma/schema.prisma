@@ -17,22 +17,29 @@ model AdminUser {
 }
 
 model Client {
-  id           String     @id @default(cuid())
-  name         String
-  document     String
-  address      String
-  city         String
-  phone        String
-  salonName    String
-  email        String?    @unique
-  passwordHash String?
-  status       String     @default("pending")
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  promoCodes   PromoCode[]
+  id             String      @id @default(cuid())
+  name           String
+  document       String
+  address        String
+  city           String
+  phone          String
+  salonName      String
+  email          String?     @unique
+  passwordHash   String?
+  status         String      @default("pending")
+  referralCode   String?     @unique
+  referredById   String?
+  referredBy     Client?     @relation("ClientReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals      Client[]    @relation("ClientReferrals")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  promoCodes     PromoCode[] @relation("ClientPromos")
+  referralReward PromoCode?  @relation("ReferralReward")
+  orders         Order[]
 
   @@index([status])
   @@index([document])
+  @@index([referredById])
 }
 
 model Category {
@@ -112,9 +119,13 @@ model Order {
   shipping        Int         @default(0)
   total           Int
   notes           String?
+  clientId        String?
+  client          Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           OrderItem[]
+
+  @@index([clientId])
 }
 
 model OrderItem {
@@ -143,9 +154,11 @@ model PromoCode {
   source    String    @default("wheel")
   usedAt    DateTime?
   orderId   String?
-  clientId  String?
-  client    Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  createdAt DateTime  @default(now())
+  clientId         String?
+  client           Client?   @relation("ClientPromos", fields: [clientId], references: [id], onDelete: SetNull)
+  referredClientId String?   @unique
+  referredClient   Client?   @relation("ReferralReward", fields: [referredClientId], references: [id], onDelete: SetNull)
+  createdAt        DateTime  @default(now())
 
   @@index([code])
   @@index([clientId])
