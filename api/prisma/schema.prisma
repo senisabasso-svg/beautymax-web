@@ -125,6 +125,7 @@ model Order {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           OrderItem[]
+  milestones      OrderMilestone[]
 
   @@index([clientId])
 }
@@ -177,4 +178,28 @@ model RouletteDiscount {
   updatedAt   DateTime @updatedAt
 
   @@index([active, sortOrder])
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  kind      String
+  label     String
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
+  @@index([path])
+}
+
+model OrderMilestone {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
 }

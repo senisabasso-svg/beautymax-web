@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
+import { buildReport } from "../lib/reports.js";
 import { requireAuth } from "../middleware/auth.js";
 
 export const adminRouter = Router();
@@ -27,4 +28,11 @@ adminRouter.get("/stats", requireAuth, async (_req, res) => {
     activeClients,
     recent,
   });
+});
+
+adminRouter.get("/reports", requireAuth, async (req, res) => {
+  const raw = Number(req.query.days ?? 30);
+  const days = raw === 0 ? 0 : [7, 30, 90].includes(raw) ? raw : 30;
+  const report = await buildReport(days);
+  return res.json(report);
 });

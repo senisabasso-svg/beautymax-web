@@ -11,6 +11,7 @@ const links = [
   { href: "/admin/productos", label: "Productos" },
   { href: "/admin/categorias", label: "Categorías" },
   { href: "/admin/pedidos", label: "Pedidos" },
+  { href: "/admin/reportes", label: "Reportes" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/descuentos-ruleta", label: "Descuentos ruleta" },
   { href: "/admin/codigos", label: "Códigos" },
@@ -22,7 +23,12 @@ export function AdminShell({ children, title }: { children: ReactNode; title: st
 
   return (
     <div className="min-h-screen bg-[#111] text-cream">
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-4 py-8 md:flex-row md:px-6">
+      <div
+        className={cn(
+          "mx-auto flex min-h-screen flex-col gap-8 px-4 py-8 md:flex-row md:px-6",
+          pathname.startsWith("/admin/reportes") ? "max-w-7xl" : "max-w-6xl",
+        )}
+      >
         <aside className="md:w-52 md:shrink-0">
           <p className="font-serif text-2xl text-gold">Beautymax</p>
           <p className="mt-1 text-xs uppercase tracking-[0.2em] text-cream/50">Admin</p>

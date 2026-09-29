@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Montserrat } from "next/font/google";
 import type { ReactNode } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { VisitTracker } from "@/components/analytics/VisitTracker";
 import { CatalogHydrator } from "@/components/catalog/CatalogHydrator";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
         <CatalogHydrator />
+        <VisitTracker />
         <StoreChrome>
           <TopBar />
           <Header />

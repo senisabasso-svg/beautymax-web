@@ -146,6 +146,7 @@ ordersRouter.post("/", async (req, res) => {
         notes: data.notes ?? null,
         clientId: linkedClientId,
         items: { create: lines },
+        milestones: { create: { status: "nuevo" } },
       },
       include: { items: true },
     });
@@ -197,7 +198,12 @@ ordersRouter.patch("/:id/status", requireAuth, async (req, res) => {
   if (!order) return res.status(404).json({ error: "Pedido no encontrado" });
   const updated = await prisma.order.update({
     where: { id: order.id },
-    data: { status: status.data },
+    data: {
+      status: status.data,
+      ...(order.status !== status.data
+        ? { milestones: { create: { status: status.data } } }
+        : {}),
+    },
     include: { items: true },
   });
   return res.json(updated);
