@@ -47,10 +47,10 @@ async function main() {
   });
 
   for (const [index, category] of defaultCategories.entries()) {
-    await prisma.category.upsert({
-      where: { slug: category.slug },
-      update: {},
-      create: {
+    const existing = await prisma.category.findUnique({ where: { slug: category.slug } });
+    if (existing) continue;
+    await prisma.category.create({
+      data: {
         ...category,
         sortOrder: index,
         active: true,
