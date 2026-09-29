@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/brand/SectionHeading";
 import { Reveal } from "@/components/motion/Reveal";
-import { getCategories } from "@/lib/catalog";
+import { loadCategories } from "@/lib/catalog";
 
-export function CategoryGrid() {
-  const categories = getCategories();
+export async function CategoryGrid() {
+  const categories = await loadCategories();
 
   return (
     <section className="bg-cream py-16 md:py-24">

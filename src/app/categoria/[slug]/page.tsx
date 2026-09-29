@@ -4,9 +4,11 @@ import { Suspense } from "react";
 import { ProductGridSkeleton } from "@/components/product/ProductGrid";
 import { Catalog } from "@/components/shop/Catalog";
 import { Container } from "@/components/ui/container";
-import { getCategories, getCategoryBySlug, loadCatalog, getProductsByCategory } from "@/lib/catalog";
+import { getCategories, loadCatalog, loadCategories, getProductsByCategory } from "@/lib/catalog";
 
 type Params = { slug: string };
+
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return getCategories().map((category) => ({ slug: category.slug }));
@@ -14,14 +16,16 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const categories = await loadCategories();
+  const category = categories.find((item) => item.slug === slug);
   if (!category) return {};
   return { title: category.name, description: category.description };
 }
 
 export default async function CategoryPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const categories = await loadCategories();
+  const category = categories.find((item) => item.slug === slug);
   if (!category) notFound();
   await loadCatalog();
 

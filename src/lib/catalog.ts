@@ -1,11 +1,12 @@
-import { brands, categories, getCategory, isCategory } from "@/data/taxonomy";
+import { brands, categories } from "@/data/taxonomy";
 import { products as localProducts } from "@/data/products";
 import { brandSlug } from "@/lib/utils";
-import type { Category, Product } from "@/types/product";
+import type { CategoryInfo, Product } from "@/types/product";
 import { getApiUrl } from "@/lib/api/client";
 
 /** Catálogo en memoria: arranca local y se puede hidratar desde el API. */
 let catalog: Product[] = localProducts;
+let categoryCatalog: CategoryInfo[] = categories;
 
 export function replaceCatalog(products: Product[]) {
   catalog = products;
@@ -40,7 +41,27 @@ export function getProductById(id: string) {
   return catalog.find((product) => product.id === id);
 }
 
-export function getProductsByCategory(category: Category) {
+export function replaceCategories(next: CategoryInfo[]) {
+  if (next.length) categoryCatalog = next;
+}
+
+export async function loadCategories(): Promise<CategoryInfo[]> {
+  const base = getApiUrl();
+  try {
+    const res = await fetch(`${base}/categories`, { cache: "no-store" });
+    if (!res.ok) throw new Error("API categories error");
+    const data = (await res.json()) as CategoryInfo[];
+    if (Array.isArray(data) && data.length > 0) {
+      replaceCategories(data);
+      return data;
+    }
+  } catch {
+    // fallback local
+  }
+  return categoryCatalog;
+}
+
+export function getProductsByCategory(category: string) {
   return catalog.filter((product) => product.category === category);
 }
 
@@ -64,11 +85,11 @@ export function getRelatedProducts(product: Product, limit = 4) {
 }
 
 export function getCategories() {
-  return categories;
+  return categoryCatalog;
 }
 
 export function getCategoryBySlug(slug: string) {
-  return isCategory(slug) ? getCategory(slug) : undefined;
+  return categoryCatalog.find((category) => category.slug === slug);
 }
 
 export function getBrands() {

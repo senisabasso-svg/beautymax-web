@@ -1,12 +1,4 @@
-export type Category =
-  | "coloracion"
-  | "decoloracion"
-  | "tratamientos"
-  | "styling"
-  | "tijeras"
-  | "maquinas"
-  | "secadores"
-  | "planchas";
+export type Category = string;
 
 export type Badge = "exclusivo" | "nuevo" | "mas-vendido";
 
@@ -45,10 +37,14 @@ export interface Product {
 }
 
 export interface CategoryInfo {
-  slug: Category;
+  id?: string;
+  slug: string;
   name: string;
   description: string;
   eyebrow: string;
+  active?: boolean;
+  productCount?: number;
+  sortOrder?: number;
 }
 
 export interface BrandInfo {

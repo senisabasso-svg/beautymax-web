@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { ensureDefaultCategories } from "../lib/categories.js";
 import { prisma } from "../lib/prisma.js";
 import { mapProduct } from "../lib/map-product.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -74,18 +75,28 @@ const productSchema = z.object({
   variants: z.array(variantSchema).min(1),
 });
 
+async function resolveCategory(slug: string) {
+  await ensureDefaultCategories();
+  return prisma.category.findUnique({ where: { slug } });
+}
+
 productsRouter.post("/", requireAuth, async (req, res) => {
   const parsed = productSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Datos inválidos", details: parsed.error.flatten() });
   }
   const data = parsed.data;
+  const category = await resolveCategory(data.category);
+  if (!category || !category.active) {
+    return res.status(400).json({ error: "Elegí una categoría cargada" });
+  }
   const created = await prisma.product.create({
     data: {
       slug: data.slug,
       name: data.name,
       brand: data.brand,
-      category: data.category,
+      category: category.slug,
+      categoryId: category.id,
       shortDescription: data.shortDescription,
       description: data.description,
       howToUse: data.howToUse ?? null,
@@ -122,6 +133,10 @@ productsRouter.put("/:id", requireAuth, async (req, res) => {
   if (!existing) return res.status(404).json({ error: "Producto no encontrado" });
 
   const data = parsed.data;
+  const category = await resolveCategory(data.category);
+  if (!category || (!category.active && category.slug !== existing.category)) {
+    return res.status(400).json({ error: "Elegí una categoría cargada" });
+  }
   await prisma.variant.deleteMany({ where: { productId: existing.id } });
   const updated = await prisma.product.update({
     where: { id: existing.id },
@@ -129,7 +144,8 @@ productsRouter.put("/:id", requireAuth, async (req, res) => {
       slug: data.slug,
       name: data.name,
       brand: data.brand,
-      category: data.category,
+      category: category.slug,
+      categoryId: category.id,
       shortDescription: data.shortDescription,
       description: data.description,
       howToUse: data.howToUse ?? null,

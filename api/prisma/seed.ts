@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { defaultCategories } from "../src/lib/default-categories.ts";
 
 const prisma = new PrismaClient();
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -45,6 +46,18 @@ async function main() {
     create: { email, passwordHash, name },
   });
 
+  for (const [index, category] of defaultCategories.entries()) {
+    await prisma.category.upsert({
+      where: { slug: category.slug },
+      update: {},
+      create: {
+        ...category,
+        sortOrder: index,
+        active: true,
+      },
+    });
+  }
+
   const seedPath = join(__dirname, "seed-products.json");
   if (!existsSync(seedPath)) {
     console.warn("No está seed-products.json — solo se creó el admin.");
@@ -54,13 +67,20 @@ async function main() {
 
   const products = JSON.parse(readFileSync(seedPath, "utf8")) as SeedProduct[];
 
+  const categoryBySlug = new Map(
+    (await prisma.category.findMany({ select: { id: true, slug: true } })).map((category) => [
+      category.slug,
+      category.id,
+    ]),
+  );
+
   for (const product of products) {
+    const categoryId = categoryBySlug.get(product.category) ?? null;
     await prisma.product.upsert({
       where: { slug: product.slug },
       update: {
         name: product.name,
         brand: product.brand,
-        category: product.category,
         shortDescription: product.shortDescription,
         description: product.description,
         howToUse: product.howToUse ?? null,
@@ -77,6 +97,7 @@ async function main() {
         name: product.name,
         brand: product.brand,
         category: product.category,
+        categoryId,
         shortDescription: product.shortDescription,
         description: product.description,
         howToUse: product.howToUse ?? null,
@@ -133,6 +154,13 @@ async function main() {
         });
       }
     }
+  }
+
+  for (const [slug, id] of categoryBySlug) {
+    await prisma.product.updateMany({
+      where: { category: slug, categoryId: null },
+      data: { categoryId: id },
+    });
   }
 
   console.log(`Seed OK: ${products.length} productos + admin ${email}`);

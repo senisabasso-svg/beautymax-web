@@ -35,25 +35,44 @@ model Client {
   @@index([document])
 }
 
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  eyebrow     String    @default("")
+  description String    @default("")
+  sortOrder   Int       @default(0)
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+
+  @@index([active, sortOrder])
+}
+
 model Product {
-  id                String    @id @default(cuid())
-  slug              String    @unique
+  id                String      @id @default(cuid())
+  slug              String      @unique
   name              String
   brand             String
   category          String
+  categoryId        String?
+  categoryRecord    Category?   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   shortDescription  String
   description       String
   howToUse          String?
-  benefits          String[]  @default([])
-  images            String[]  @default([])
-  badges            String[]  @default([])
-  featured          Boolean   @default(false)
-  requiresSelection Boolean   @default(false)
-  active            Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  benefits          String[]    @default([])
+  images            String[]    @default([])
+  badges            String[]    @default([])
+  featured          Boolean     @default(false)
+  requiresSelection Boolean     @default(false)
+  active            Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
   variants          Variant[]
   orderItems        OrderItem[]
+
+  @@index([categoryId])
 }
 
 model Variant {

@@ -8,20 +8,27 @@ import { Button } from "@/components/ui/button";
 import { getAdminToken } from "@/lib/api/admin-auth";
 import { apiFetch } from "@/lib/api/client";
 import { formatPrice } from "@/lib/format";
-import type { Product } from "@/types/product";
+import type { CategoryInfo, Product } from "@/types/product";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<CategoryInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = getAdminToken();
     if (!token) return;
-    apiFetch<Product[]>("/products?admin=1", {
-      token,
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(setProducts)
+    Promise.all([
+      apiFetch<Product[]>("/products?admin=1", {
+        token,
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      apiFetch<CategoryInfo[]>("/categories").catch(() => [] as CategoryInfo[]),
+    ])
+      .then(([nextProducts, nextCategories]) => {
+        setProducts(nextProducts);
+        setCategories(nextCategories);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -50,6 +57,7 @@ export default function AdminProductsPage() {
                 <tr>
                   <th className="p-3 font-medium">Producto</th>
                   <th className="p-3 font-medium">Marca</th>
+                  <th className="p-3 font-medium">Categoría</th>
                   <th className="p-3 font-medium">Desde</th>
                   <th className="p-3 font-medium">Variantes</th>
                   <th className="p-3 font-medium" />
@@ -63,6 +71,9 @@ export default function AdminProductsPage() {
                       <p className="text-xs text-cream/40">{product.slug}</p>
                     </td>
                     <td className="p-3 text-cream/70">{product.brand}</td>
+                    <td className="p-3 text-cream/70">
+                      {categories.find((item) => item.slug === product.category)?.name ?? product.category}
+                    </td>
                     <td className="p-3 text-gold">
                       {formatPrice(Math.min(...product.variants.map((v) => v.price)))}
                     </td>

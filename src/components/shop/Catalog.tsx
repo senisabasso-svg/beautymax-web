@@ -7,10 +7,11 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { Container } from "@/components/ui/container";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { categories as allCategories } from "@/data/taxonomy";
+import { apiFetch } from "@/lib/api/client";
 import { minPrice } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { brandSlug, cn } from "@/lib/utils";
-import type { Category, Product } from "@/types/product";
+import type { Category, CategoryInfo, Product } from "@/types/product";
 
 type Sort = "destacados" | "precio-asc" | "precio-desc" | "nombre";
 
@@ -41,6 +42,7 @@ export function Catalog({
   const qParam = params.get("q") ?? "";
   const [query, setQuery] = useState(qParam);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [remoteCategories, setRemoteCategories] = useState<CategoryInfo[] | null>(null);
   const category = lockedCategory ?? params.get("categoria") ?? "";
   const brand = params.get("marca") ?? "";
   const sort = (params.get("orden") as Sort) || "destacados";
@@ -50,6 +52,20 @@ export function Catalog({
   useEffect(() => {
     setQuery(qParam);
   }, [qParam]);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<CategoryInfo[]>("/categories")
+      .then((items) => {
+        if (!cancelled) setRemoteCategories(items);
+      })
+      .catch(() => {
+        /* sin API: quedan las categorías locales */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -73,7 +89,17 @@ export function Catalog({
     return names.sort((a, b) => a.localeCompare(b, "es"));
   }, [products]);
 
-  const categoryOptions = allCategories.filter((item) => products.some((product) => product.category === item.slug));
+  const categoryNames = useMemo(() => {
+    const source = remoteCategories ?? allCategories;
+    return new Map(source.map((item) => [item.slug, item.name]));
+  }, [remoteCategories]);
+
+  const categoryOptions = useMemo(() => {
+    const slugs = Array.from(new Set(products.map((product) => product.category)));
+    return slugs
+      .filter((slug) => !remoteCategories || remoteCategories.some((item) => item.slug === slug))
+      .map((slug) => ({ slug, name: categoryNames.get(slug) ?? slug }));
+  }, [products, categoryNames, remoteCategories]);
 
   const filtered = useMemo(() => {
     const minValue = min ? Number(min) : undefined;

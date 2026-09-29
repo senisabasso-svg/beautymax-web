@@ -6,6 +6,7 @@ import { ordersRouter } from "./routes/orders.js";
 import { promoRouter } from "./routes/promo.js";
 import { adminRouter } from "./routes/admin.js";
 import { clientsRouter } from "./routes/clients.js";
+import { categoriesRouter } from "./routes/categories.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -28,6 +29,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/auth", authRouter);
 app.use("/products", productsRouter);
+app.use("/categories", categoriesRouter);
 app.use("/orders", ordersRouter);
 app.use("/promo", promoRouter);
 app.use("/admin", adminRouter);

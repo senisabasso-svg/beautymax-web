@@ -1,25 +1,15 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAdminToken } from "@/lib/api/admin-auth";
 import { apiFetch } from "@/lib/api/client";
-import type { Product, Variant } from "@/types/product";
-
-const categories = [
-  "coloracion",
-  "decoloracion",
-  "tratamientos",
-  "styling",
-  "tijeras",
-  "maquinas",
-  "secadores",
-  "planchas",
-];
+import type { CategoryInfo, Product, Variant } from "@/types/product";
 
 type FormVariant = Variant;
 
@@ -64,8 +54,29 @@ function toForm(product?: Product): FormState {
 export function ProductForm({ product }: { product?: Product }) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(() => toForm(product));
+  const [categories, setCategories] = useState<CategoryInfo[]>([]);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<CategoryInfo[]>("/categories")
+      .then((items) => {
+        if (cancelled) return;
+        setCategories(items);
+        setForm((prev) => {
+          if (items.some((item) => item.slug === prev.category)) return prev;
+          if (product?.category) return prev;
+          return { ...prev, category: items[0]?.slug ?? prev.category };
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setCategories([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.category]);
 
   function updateVariant(index: number, patch: Partial<FormVariant>) {
     setForm((prev) => ({
@@ -172,13 +183,21 @@ export function ProductForm({ product }: { product?: Product }) {
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
             className="flex h-10 w-full rounded-md border border-white/20 bg-black px-3 text-cream"
+            required
           >
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {categories.length === 0 ? <option value={form.category}>{form.category || "Sin categorías"}</option> : null}
+            {categories.map((item) => (
+              <option key={item.slug} value={item.slug}>
+                {item.name}
               </option>
             ))}
+            {form.category && !categories.some((item) => item.slug === form.category) ? (
+              <option value={form.category}>{form.category}</option>
+            ) : null}
           </select>
+          <Link href="/admin/categorias" className="text-xs text-gold hover:underline">
+            Cargar categorías
+          </Link>
         </Field>
       </div>
 
