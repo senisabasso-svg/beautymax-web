@@ -2,20 +2,15 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  createPromoCode,
-  normalizePromoCode,
-  type DiscountPercent,
-  type PromoCode,
-} from "@/lib/promo";
+import { createPromoCode, normalizePromoCode, type PromoCode } from "@/lib/promo";
 
 interface PromoState {
   hasSpun: boolean;
   codes: PromoCode[];
   appliedCode: string | null;
-  awardCode: (percent: DiscountPercent, preset?: PromoCode) => PromoCode;
+  awardCode: (percent: number, preset?: PromoCode) => PromoCode;
   registerCode: (promo: PromoCode) => void;
-  applyCode: (raw: string) => { ok: true; percent: DiscountPercent } | { ok: false; reason: string };
+  applyCode: (raw: string) => { ok: true; percent: number } | { ok: false; reason: string };
   clearApplied: () => void;
   redeemApplied: () => void;
   getAvailableCodes: () => PromoCode[];
@@ -53,7 +48,7 @@ export const usePromo = create<PromoState>()(
         }
 
         set({ appliedCode: code });
-        return { ok: true, percent: entry.percent as DiscountPercent };
+        return { ok: true, percent: entry.percent };
       },
       clearApplied: () => set({ appliedCode: null }),
       redeemApplied: () => {

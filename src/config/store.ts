@@ -68,7 +68,8 @@ export const storeConfig = {
   discountWheel: {
     enabled: true,
     title: "Girá para obtener códigos de descuento",
-    subtitle: "Cada código es de un solo uso. Aplicálo en el carrito al pagar.",
+    subtitle:
+      "Solo para clientes profesionales. Un código a la vez: usalo en el carrito antes de girar de nuevo.",
   },
 } as const;
 

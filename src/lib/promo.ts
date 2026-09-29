@@ -1,16 +1,23 @@
-export type DiscountPercent = 10 | 20;
+export type DiscountPercent = number;
 
 export interface PromoCode {
   code: string;
-  percent: DiscountPercent;
+  percent: number;
   createdAt: string;
   usedAt?: string;
 }
 
-/** Segmentos de la ruleta: más chances de 10%, menos de 20%. */
-export const wheelSegments: DiscountPercent[] = [10, 20, 10, 10, 20, 10, 10, 20];
+export interface WheelSegment {
+  id?: string;
+  percent: number;
+  displayOnly?: boolean;
+  label?: string | null;
+}
 
-export function createPromoCode(percent: DiscountPercent): PromoCode {
+/** Fallback si la API no responde. */
+export const wheelSegments: number[] = [10, 20, 10, 15, 10, 20, 10, 25];
+
+export function createPromoCode(percent: number): PromoCode {
   const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
   return {
     code: `BM${percent}-${suffix}`,

@@ -10,8 +10,10 @@ import { QuantityInput } from "@/components/product/QuantityInput";
 import { ProductImage } from "@/components/product/ProductImage";
 import { cartTotals, resolveCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
+import { useCanSeePrices } from "@/store/client-auth-store";
 import { useCart } from "@/store/cart-store";
 import { useAppliedPromo } from "@/store/promo-store";
+import { openClientRegister } from "@/components/client/PriceGate";
 
 export function CartDrawer() {
   const open = useCart((state) => state.isOpen);
@@ -21,9 +23,11 @@ export function CartDrawer() {
   const setQuantity = useCart((state) => state.setQuantity);
   const removeItem = useCart((state) => state.removeItem);
   const promo = useAppliedPromo();
+  const canSeePrices = useCanSeePrices();
   const lines = resolveCart(items);
   const { subtotal, discount, shipping, total } = cartTotals(lines, "envio", promo?.percent ?? 0);
   const router = useRouter();
+  const money = (amount: number) => (canSeePrices ? formatPrice(amount) : "—");
 
   function go(href: string) {
     setOpen();
@@ -71,7 +75,7 @@ export function CartDrawer() {
                       {line.name}
                     </Link>
                     <p className="mt-1 text-xs uppercase tracking-[0.12em] text-muted">{line.variantLabel}</p>
-                    <p className="mt-1 text-sm font-semibold text-ink">{formatPrice(line.lineTotal)}</p>
+                    <p className="mt-1 text-sm font-semibold text-ink">{money(line.lineTotal)}</p>
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <QuantityInput
                         value={line.quantity}
@@ -92,16 +96,28 @@ export function CartDrawer() {
               ))}
             </ul>
             <div className="border-t border-ink/10 px-5 py-5">
+              {!canSeePrices ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen();
+                    openClientRegister();
+                  }}
+                  className="mb-4 w-full text-left text-sm text-gold-deep underline-offset-2 hover:underline"
+                >
+                  Registrate como cliente profesional para ver precios y finalizar la compra.
+                </button>
+              ) : null}
               <PromoCodeField />
               <div className="mt-4">
-                <FreeShippingBar subtotal={subtotal} />
+                <FreeShippingBar subtotal={canSeePrices ? subtotal : 0} />
               </div>
               <dl className="mt-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-muted">Subtotal</dt>
-                  <dd className="font-semibold">{formatPrice(subtotal)}</dd>
+                  <dd className="font-semibold">{money(subtotal)}</dd>
                 </div>
-                {discount > 0 ? (
+                {canSeePrices && discount > 0 ? (
                   <div className="flex justify-between">
                     <dt className="text-muted">Descuento {promo?.percent}%</dt>
                     <dd className="font-semibold text-gold-deep">-{formatPrice(discount)}</dd>
@@ -109,16 +125,21 @@ export function CartDrawer() {
                 ) : null}
                 <div className="flex justify-between">
                   <dt className="text-muted">Envío estimado</dt>
-                  <dd className="font-semibold">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</dd>
+                  <dd className="font-semibold">
+                    {!canSeePrices ? "—" : shipping === 0 ? "Gratis" : formatPrice(shipping)}
+                  </dd>
                 </div>
                 <div className="flex justify-between text-base">
                   <dt className="font-semibold">Total</dt>
-                  <dd className="font-semibold">{formatPrice(total)}</dd>
+                  <dd className="font-semibold">{money(total)}</dd>
                 </div>
               </dl>
               <div className="mt-5 grid gap-2">
-                <Button type="button" onClick={() => go("/checkout")}>
-                  Finalizar compra
+                <Button
+                  type="button"
+                  onClick={() => (canSeePrices ? go("/checkout") : openClientRegister())}
+                >
+                  {canSeePrices ? "Finalizar compra" : "Registrarme para comprar"}
                 </Button>
                 <Button type="button" variant="outlineDark" onClick={() => go("/carrito")}>
                   Ver carrito

@@ -1,14 +1,16 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { Menu, Search, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Logo } from "@/components/brand/Logo";
+import { openClientLogin, openClientRegister } from "@/components/client/PriceGate";
 import { SearchDialog } from "@/components/layout/SearchDialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { navLinks } from "@/config/store";
 import { useCart, useCartCount } from "@/store/cart-store";
+import { useClientAuth } from "@/store/client-auth-store";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,8 +20,16 @@ export function Header() {
   const count = useCartCount();
   const reduce = useReducedMotion();
   const shown = ready ? count : 0;
+  const client = useClientAuth((s) => s.client);
+  const token = useClientAuth((s) => s.token);
+  const clearSession = useClientAuth((s) => s.clearSession);
+  const refreshMe = useClientAuth((s) => s.refreshMe);
 
   useEffect(() => setReady(true), []);
+
+  useEffect(() => {
+    if (token) void refreshMe();
+  }, [token, refreshMe]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-black text-white">
@@ -44,7 +54,25 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <div className="ml-auto flex items-center lg:ml-0">
+        <div className="ml-auto flex items-center gap-1 lg:ml-0">
+          {token && client?.status === "active" ? (
+            <button
+              type="button"
+              onClick={clearSession}
+              className="hidden max-w-[9rem] truncate text-[10px] font-medium uppercase tracking-[0.12em] text-gold/80 hover:text-gold sm:inline"
+              title={client.email ?? client.name}
+            >
+              {client.name.split(" ")[0]} · salir
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={openClientLogin}
+              className="hidden text-[10px] font-medium uppercase tracking-[0.12em] text-white/70 hover:text-gold sm:inline"
+            >
+              Cliente
+            </button>
+          )}
           <button
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center text-white hover:text-gold"
@@ -90,6 +118,41 @@ export function Header() {
                 </Link>
               ))}
             </nav>
+            {token && client?.status === "active" ? (
+              <button
+                type="button"
+                className="mt-6 text-left text-sm text-gold"
+                onClick={() => {
+                  clearSession();
+                  setMenuOpen(false);
+                }}
+              >
+                Cerrar sesión ({client.name})
+              </button>
+            ) : (
+              <div className="mt-6 flex flex-col gap-2">
+                <button
+                  type="button"
+                  className="text-left text-sm text-gold"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    openClientLogin();
+                  }}
+                >
+                  Ingresar como cliente
+                </button>
+                <button
+                  type="button"
+                  className="text-left text-sm text-white/70"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    openClientRegister();
+                  }}
+                >
+                  Registrarme como profesional
+                </button>
+              </div>
+            )}
             <Link
               href="/tienda"
               onClick={() => setMenuOpen(false)}

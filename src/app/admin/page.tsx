@@ -13,6 +13,8 @@ type Stats = {
   orders: number;
   unusedCodes: number;
   revenue: number;
+  pendingClients?: number;
+  activeClients?: number;
   recent: Array<{
     id: string;
     publicId: string;
@@ -39,16 +41,24 @@ export default function AdminDashboardPage() {
           <p className="text-cream/50">Cargando…</p>
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               {[
                 { label: "Productos", value: String(stats.products) },
                 { label: "Pedidos", value: String(stats.orders) },
+                { label: "Clientes pendientes", value: String(stats.pendingClients ?? 0), href: "/admin/clientes" },
+                { label: "Clientes activos", value: String(stats.activeClients ?? 0), href: "/admin/clientes" },
                 { label: "Códigos libres", value: String(stats.unusedCodes) },
                 { label: "Facturado", value: formatPrice(stats.revenue) },
               ].map((card) => (
                 <div key={card.label} className="border border-white/10 bg-white/5 p-5">
                   <p className="text-xs uppercase tracking-wider text-cream/50">{card.label}</p>
-                  <p className="mt-2 font-serif text-3xl text-gold">{card.value}</p>
+                  {"href" in card && card.href ? (
+                    <Link href={card.href} className="mt-2 block font-serif text-3xl text-gold hover:underline">
+                      {card.value}
+                    </Link>
+                  ) : (
+                    <p className="mt-2 font-serif text-3xl text-gold">{card.value}</p>
+                  )}
                 </div>
               ))}
             </div>

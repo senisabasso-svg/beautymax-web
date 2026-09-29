@@ -28,7 +28,9 @@ authRouter.post("/login", async (req, res) => {
     return res.status(500).json({ error: "Falta JWT_SECRET" });
   }
 
-  const token = jwt.sign({ sub: user.id, email: user.email }, secret, { expiresIn: "7d" });
+  const token = jwt.sign({ sub: user.id, email: user.email, role: "admin" }, secret, {
+    expiresIn: "7d",
+  });
   return res.json({
     token,
     user: { id: user.id, email: user.email, name: user.name },

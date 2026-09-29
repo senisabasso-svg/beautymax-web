@@ -1,8 +1,10 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
+import { PriceGateMessage } from "@/components/client/PriceGate";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useCanSeePrices } from "@/store/client-auth-store";
 import type { Variant } from "@/types/product";
 
 export type ToneQuantities = Record<string, number>;
@@ -18,6 +20,7 @@ export function ColorTonePicker({
   onChange: (variantId: string, quantity: number) => void;
   error?: string;
 }) {
+  const canSeePrices = useCanSeePrices();
   const selectedCount = Object.values(quantities).filter((qty) => qty > 0).length;
 
   return (
@@ -60,8 +63,22 @@ export function ColorTonePicker({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold leading-snug">{name}</p>
                 <p className={cn("text-[11px]", selected ? "text-gold-light" : "text-muted")}>
-                  {unavailable ? "Sin stock" : formatPrice(variant.price)}
-                  {variant.sku ? ` · ${variant.sku}` : ""}
+                  {unavailable ? (
+                    "Sin stock"
+                  ) : canSeePrices ? (
+                    <>
+                      {formatPrice(variant.price)}
+                      {variant.sku ? ` · ${variant.sku}` : ""}
+                    </>
+                  ) : (
+                    <PriceGateMessage
+                      compact
+                      className={cn(
+                        "underline-offset-2 hover:underline",
+                        selected ? "text-gold-light" : "text-gold-deep",
+                      )}
+                    />
+                  )}
                 </p>
               </div>
               {unavailable ? (

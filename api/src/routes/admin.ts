@@ -5,11 +5,13 @@ import { requireAuth } from "../middleware/auth.js";
 export const adminRouter = Router();
 
 adminRouter.get("/stats", requireAuth, async (_req, res) => {
-  const [products, orders, unusedCodes, revenue] = await Promise.all([
+  const [products, orders, unusedCodes, revenue, pendingClients, activeClients] = await Promise.all([
     prisma.product.count({ where: { active: true } }),
     prisma.order.count(),
     prisma.promoCode.count({ where: { usedAt: null } }),
     prisma.order.aggregate({ _sum: { total: true } }),
+    prisma.client.count({ where: { status: "pending" } }),
+    prisma.client.count({ where: { status: "active" } }),
   ]);
   const recent = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
@@ -21,6 +23,8 @@ adminRouter.get("/stats", requireAuth, async (_req, res) => {
     orders,
     unusedCodes,
     revenue: revenue._sum.total ?? 0,
+    pendingClients,
+    activeClients,
     recent,
   });
 });

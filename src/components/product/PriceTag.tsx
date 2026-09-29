@@ -1,5 +1,9 @@
+"use client";
+
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { PriceGateMessage } from "@/components/client/PriceGate";
+import { useCanSeePrices } from "@/store/client-auth-store";
 
 export function PriceTag({
   price,
@@ -14,7 +18,21 @@ export function PriceTag({
   prefix?: string;
   className?: string;
 }) {
+  const canSee = useCanSeePrices();
   const onSale = typeof compareAtPrice === "number" && compareAtPrice > price;
+
+  if (!canSee) {
+    return (
+      <PriceGateMessage
+        compact
+        className={cn(
+          "text-left text-sm font-medium underline-offset-2 hover:underline",
+          tone === "light" ? "text-gold/90" : "text-gold-deep",
+          className,
+        )}
+      />
+    );
+  }
 
   return (
     <p className={cn("flex flex-wrap items-baseline gap-2", className)}>

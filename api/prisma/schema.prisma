@@ -16,6 +16,25 @@ model AdminUser {
   updatedAt    DateTime @updatedAt
 }
 
+model Client {
+  id           String     @id @default(cuid())
+  name         String
+  document     String
+  address      String
+  city         String
+  phone        String
+  salonName    String
+  email        String?    @unique
+  passwordHash String?
+  status       String     @default("pending")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  promoCodes   PromoCode[]
+
+  @@index([status])
+  @@index([document])
+}
+
 model Product {
   id                String    @id @default(cuid())
   slug              String    @unique
@@ -105,7 +124,23 @@ model PromoCode {
   source    String    @default("wheel")
   usedAt    DateTime?
   orderId   String?
+  clientId  String?
+  client    Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
   createdAt DateTime  @default(now())
 
   @@index([code])
+  @@index([clientId])
+}
+
+model RouletteDiscount {
+  id          String   @id @default(cuid())
+  percent     Int
+  label       String?
+  displayOnly Boolean  @default(false)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active, sortOrder])
 }

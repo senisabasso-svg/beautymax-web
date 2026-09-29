@@ -5,6 +5,7 @@ import { productsRouter } from "./routes/products.js";
 import { ordersRouter } from "./routes/orders.js";
 import { promoRouter } from "./routes/promo.js";
 import { adminRouter } from "./routes/admin.js";
+import { clientsRouter } from "./routes/clients.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -30,6 +31,7 @@ app.use("/products", productsRouter);
 app.use("/orders", ordersRouter);
 app.use("/promo", promoRouter);
 app.use("/admin", adminRouter);
+app.use("/clients", clientsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });

@@ -10,6 +10,7 @@ import { VariantSelector } from "@/components/product/VariantSelector";
 import { formatPrice } from "@/lib/format";
 import { productHasColors, productRequiresSelection } from "@/lib/catalog";
 import { productInquiryMessage, whatsappUrl } from "@/lib/whatsapp";
+import { useCanSeePrices } from "@/store/client-auth-store";
 import { useCart } from "@/store/cart-store";
 import type { Product } from "@/types/product";
 
@@ -31,6 +32,7 @@ export function ProductPurchase({ product }: { product: Product }) {
   const [selectionError, setSelectionError] = useState("");
   const addItem = useCart((state) => state.addItem);
   const open = useCart((state) => state.open);
+  const canSeePrices = useCanSeePrices();
 
   const variant = useMemo(
     () => (variantId ? product.variants.find((entry) => entry.id === variantId) : undefined),
@@ -174,7 +176,9 @@ export function ProductPurchase({ product }: { product: Product }) {
                     <span className="text-muted"> × {line.quantity}</span>
                   </span>
                 </span>
-                <span className="font-semibold">{formatPrice(line.lineTotal)}</span>
+                <span className="font-semibold">
+                  {canSeePrices ? formatPrice(line.lineTotal) : "—"}
+                </span>
               </li>
             ))}
           </ul>
@@ -183,7 +187,7 @@ export function ProductPurchase({ product }: { product: Product }) {
               {toneUnits} {toneUnits === 1 ? "tubo" : "tubos"} · {toneLines.length}{" "}
               {toneLines.length === 1 ? "tono" : "tonos"}
             </span>
-            <span>{formatPrice(toneTotal)}</span>
+            <span>{canSeePrices ? formatPrice(toneTotal) : "—"}</span>
           </div>
         </div>
       ) : null}

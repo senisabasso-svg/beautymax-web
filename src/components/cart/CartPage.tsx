@@ -9,6 +9,8 @@ import { QuantityInput } from "@/components/product/QuantityInput";
 import { Button } from "@/components/ui/button";
 import { cartTotals, resolveCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
+import { openClientRegister } from "@/components/client/PriceGate";
+import { useCanSeePrices } from "@/store/client-auth-store";
 import { useCart } from "@/store/cart-store";
 import { useAppliedPromo } from "@/store/promo-store";
 
@@ -18,8 +20,10 @@ export function CartPage() {
   const setQuantity = useCart((state) => state.setQuantity);
   const removeItem = useCart((state) => state.removeItem);
   const promo = useAppliedPromo();
+  const canSeePrices = useCanSeePrices();
   const lines = resolveCart(items);
   const { subtotal, discount, shipping, total } = cartTotals(lines, "envio", promo?.percent ?? 0);
+  const money = (amount: number) => (canSeePrices ? formatPrice(amount) : "—");
 
   useEffect(() => setReady(true), []);
 
@@ -53,7 +57,7 @@ export function CartPage() {
                 {line.name}
               </Link>
               <p className="mt-1 text-xs uppercase tracking-[0.12em] text-muted">{line.variantLabel}</p>
-              <p className="mt-2 font-semibold">{formatPrice(line.lineTotal)}</p>
+              <p className="mt-2 font-semibold">{money(line.lineTotal)}</p>
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <QuantityInput
                   value={line.quantity}
@@ -74,16 +78,25 @@ export function CartPage() {
         ))}
       </ul>
       <aside className="h-fit bg-white p-6">
+        {!canSeePrices ? (
+          <button
+            type="button"
+            onClick={openClientRegister}
+            className="mb-4 text-left text-sm text-gold-deep underline-offset-2 hover:underline"
+          >
+            Registrate como cliente profesional para ver precios y finalizar la compra.
+          </button>
+        ) : null}
         <PromoCodeField />
         <div className="mt-5">
-          <FreeShippingBar subtotal={subtotal} />
+          <FreeShippingBar subtotal={canSeePrices ? subtotal : 0} />
         </div>
         <dl className="mt-5 space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-muted">Subtotal</dt>
-            <dd className="font-semibold">{formatPrice(subtotal)}</dd>
+            <dd className="font-semibold">{money(subtotal)}</dd>
           </div>
-          {discount > 0 ? (
+          {canSeePrices && discount > 0 ? (
             <div className="flex justify-between">
               <dt className="text-muted">Descuento {promo?.percent}%</dt>
               <dd className="font-semibold text-gold-deep">-{formatPrice(discount)}</dd>
@@ -91,17 +104,25 @@ export function CartPage() {
           ) : null}
           <div className="flex justify-between">
             <dt className="text-muted">Envío estimado</dt>
-            <dd className="font-semibold">{shipping === 0 ? "Gratis" : formatPrice(shipping)}</dd>
+            <dd className="font-semibold">
+              {!canSeePrices ? "—" : shipping === 0 ? "Gratis" : formatPrice(shipping)}
+            </dd>
           </div>
           <div className="flex justify-between border-t border-ink/10 pt-3 text-base">
             <dt className="font-semibold">Total</dt>
-            <dd className="font-semibold">{formatPrice(total)}</dd>
+            <dd className="font-semibold">{money(total)}</dd>
           </div>
         </dl>
         <p className="mt-3 text-xs leading-relaxed text-muted">El envío es una referencia. El costo final por DAC o agencia se confirma al coordinar.</p>
-        <Button asChild className="mt-6 w-full">
-          <Link href="/checkout">Finalizar compra</Link>
-        </Button>
+        {canSeePrices ? (
+          <Button asChild className="mt-6 w-full">
+            <Link href="/checkout">Finalizar compra</Link>
+          </Button>
+        ) : (
+          <Button type="button" className="mt-6 w-full" onClick={openClientRegister}>
+            Registrarme para comprar
+          </Button>
+        )}
       </aside>
     </div>
   );

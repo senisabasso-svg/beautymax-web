@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { PriceGateMessage } from "@/components/client/PriceGate";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { searchProducts } from "@/lib/catalog";
+import { searchProducts, minPrice } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
-import { minPrice } from "@/lib/catalog";
+import { useCanSeePrices } from "@/store/client-auth-store";
 
 export function SearchDialog({
   open,
@@ -16,6 +17,7 @@ export function SearchDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [query, setQuery] = useState("");
+  const canSeePrices = useCanSeePrices();
   const results = useMemo(() => (query.trim() ? searchProducts(query).slice(0, 6) : []), [query]);
 
   useEffect(() => {
@@ -55,7 +57,13 @@ export function SearchDialog({
                     <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{product.brand}</span>
                     <span className="font-serif text-lg text-ink">{product.name}</span>
                   </span>
-                  <span className="text-sm font-semibold text-ink">{formatPrice(minPrice(product))}</span>
+                  <span className="text-sm font-semibold text-ink">
+                    {canSeePrices ? (
+                      formatPrice(minPrice(product))
+                    ) : (
+                      <PriceGateMessage compact className="text-gold-deep underline-offset-2 hover:underline" />
+                    )}
+                  </span>
                 </Link>
               </li>
             ))}

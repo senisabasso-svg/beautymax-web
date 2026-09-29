@@ -2,6 +2,8 @@
 
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { PriceGateMessage } from "@/components/client/PriceGate";
+import { useCanSeePrices } from "@/store/client-auth-store";
 import type { Variant } from "@/types/product";
 
 export function VariantSelector({
@@ -19,10 +21,27 @@ export function VariantSelector({
   requireSelection?: boolean;
   error?: string;
 }) {
+  const canSeePrices = useCanSeePrices();
   const hasColors = variants.some((variant) => Boolean(variant.colorHex || variant.colorName));
   const isColor = mode === "color" || (mode === "auto" && hasColors);
   const title = isColor ? "Elegí el color" : "Elegí la presentación";
   const groupLabel = isColor ? "Color" : "Presentación";
+
+  function priceLabel(variant: Variant, selected: boolean) {
+    if (variant.stock <= 0) return "Sin stock";
+    if (!canSeePrices) {
+      return (
+        <PriceGateMessage
+          compact
+          className={cn(
+            "text-left text-[11px] underline-offset-2 hover:underline",
+            selected ? "text-gold-light" : "text-gold-deep",
+          )}
+        />
+      );
+    }
+    return formatPrice(variant.price);
+  }
 
   return (
     <div>
@@ -70,7 +89,7 @@ export function VariantSelector({
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold leading-snug">{variant.colorName ?? variant.label}</span>
                   <span className={cn("mt-1 block text-[11px]", selected ? "text-gold-light" : "text-muted")}>
-                    {unavailable ? "Sin stock" : formatPrice(variant.price)}
+                    {priceLabel(variant, selected)}
                   </span>
                 </span>
               </button>
@@ -97,8 +116,13 @@ export function VariantSelector({
                 )}
               >
                 <span className="block">{variant.label}</span>
-                <span className={cn("mt-1 block font-medium normal-case tracking-normal", selected ? "text-gold-light" : "text-muted")}>
-                  {unavailable ? "Sin stock" : formatPrice(variant.price)}
+                <span
+                  className={cn(
+                    "mt-1 block font-medium normal-case tracking-normal",
+                    selected ? "text-gold-light" : "text-muted",
+                  )}
+                >
+                  {priceLabel(variant, selected)}
                 </span>
               </button>
             );
