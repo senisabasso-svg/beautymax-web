@@ -15,6 +15,7 @@ const registerSchema = z.object({
   address: z.string().min(3).max(200),
   city: z.string().min(2).max(80),
   phone: z.string().min(8).max(30),
+  email: z.string().email().max(160),
   salonName: z.string().min(2).max(120),
   referralCode: z.string().min(4).max(20).optional(),
 });
@@ -152,12 +153,13 @@ clientsRouter.post("/register", async (req, res) => {
     address: parsed.data.address.trim(),
     city: parsed.data.city.trim(),
     phone: parsed.data.phone.trim().replace(/\s+/g, ""),
+    email: parsed.data.email.trim().toLowerCase(),
     salonName: parsed.data.salonName.trim(),
   };
 
   const existing = await prisma.client.findFirst({
     where: {
-      OR: [{ document: data.document }, { phone: data.phone }],
+      OR: [{ document: data.document }, { phone: data.phone }, { email: data.email }],
     },
   });
   if (existing) {
@@ -165,7 +167,7 @@ clientsRouter.post("/register", async (req, res) => {
       error:
         existing.status === "pending"
           ? "Ya tenés un registro pendiente de aceptación"
-          : "Ya existe un cliente con ese documento o celular",
+          : "Ya existe un cliente con ese documento, celular o email",
     });
   }
 
@@ -369,18 +371,21 @@ clientsRouter.patch("/:id/approve", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "El cliente ya está activo" });
   }
 
-  let email = client.email;
+  let email = client.email?.trim().toLowerCase() || null;
   let plainPassword: string | null = null;
   let passwordHash = client.passwordHash;
 
-  if (!email || !passwordHash) {
+  if (!passwordHash) {
+    plainPassword = makePassword();
+    passwordHash = await bcrypt.hash(plainPassword, 10);
+  }
+
+  if (!email) {
     email = makeClientEmail(client.name, client.document).toLowerCase();
     const clash = await prisma.client.findUnique({ where: { email } });
     if (clash && clash.id !== client.id) {
       email = `cliente.${Date.now().toString(36)}@cliente.beautymax.uy`;
     }
-    plainPassword = makePassword();
-    passwordHash = await bcrypt.hash(plainPassword, 10);
   }
 
   const updated = await prisma.client.update({

@@ -46,6 +46,7 @@ const emptyRegister = {
   address: "",
   city: "",
   phone: "",
+  email: "",
   salonName: "",
 };
 
@@ -340,7 +341,7 @@ export function DiscountWheel() {
                   </p>
                 ) : (
                   <p className="mt-3 text-sm leading-relaxed text-white/65">
-                    Usá el email y la contraseña que te enviamos por WhatsApp al aceptar tu registro.
+                    Usá el email con el que te registraste y la contraseña que te enviamos por WhatsApp.
                   </p>
                 )}
 
@@ -348,18 +349,22 @@ export function DiscountWheel() {
                   <form onSubmit={onRegister} className="mt-5 space-y-3">
                     {(
                       [
-                        ["name", "Nombre", "Tu nombre completo"],
-                        ["document", "CI o RUT", "Documento"],
-                        ["address", "Dirección", "Calle y número"],
-                        ["city", "Ciudad", "Ciudad"],
-                        ["phone", "Celular", "09X XXX XXX"],
-                        ["salonName", "Nombre de la tienda o centro de cosmética", "Salón / tienda"],
+                        ["name", "Nombre", "Tu nombre completo", "text"],
+                        ["document", "CI o RUT", "Documento", "text"],
+                        ["address", "Dirección", "Calle y número", "text"],
+                        ["city", "Ciudad", "Ciudad", "text"],
+                        ["phone", "Celular", "09X XXX XXX", "tel"],
+                        ["email", "Email", "tu@correo.com", "email"],
+                        ["salonName", "Nombre de la tienda o centro de cosmética", "Salón / tienda", "text"],
                       ] as const
-                    ).map(([key, label, placeholder]) => (
+                    ).map(([key, label, placeholder, type]) => (
                       <div key={key}>
                         <Label className="text-white/70">{label}</Label>
                         <Input
                           required
+                          type={type}
+                          inputMode={type === "email" ? "email" : type === "tel" ? "tel" : undefined}
+                          autoComplete={type === "email" ? "email" : type === "tel" ? "tel" : undefined}
                           value={registerForm[key]}
                           onChange={(e) => setRegisterForm((f) => ({ ...f, [key]: e.target.value }))}
                           placeholder={placeholder}
