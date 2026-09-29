@@ -104,16 +104,17 @@ async function ensureReferralCode(clientId: string) {
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const referralCode = makeReferralCode();
-    try {
-      const updated = await prisma.client.update({
-        where: { id: clientId },
-        data: { referralCode },
-        select: { referralCode: true },
-      });
-      return updated.referralCode;
-    } catch {
-      // código repetido: reintentar
-    }
+    const taken = await prisma.client.findFirst({
+      where: { referralCode },
+      select: { id: true },
+    });
+    if (taken) continue;
+    const updated = await prisma.client.update({
+      where: { id: clientId },
+      data: { referralCode },
+      select: { referralCode: true },
+    });
+    return updated.referralCode;
   }
   return null;
 }
@@ -184,15 +185,21 @@ clientsRouter.post("/register", async (req, res) => {
       },
     });
     if (referrer) {
-      await tx.promoCode.create({
-        data: {
-          code: makePromoCode(REFERRAL_PERCENT),
-          percent: REFERRAL_PERCENT,
-          source: "referral",
-          clientId: referrer.id,
-          referredClientId: client.id,
-        },
+      const already = await tx.promoCode.findFirst({
+        where: { referredClientId: client.id, source: "referral" },
+        select: { id: true },
       });
+      if (!already) {
+        await tx.promoCode.create({
+          data: {
+            code: makePromoCode(REFERRAL_PERCENT),
+            percent: REFERRAL_PERCENT,
+            source: "referral",
+            clientId: referrer.id,
+            referredClientId: client.id,
+          },
+        });
+      }
     }
     return client;
   });

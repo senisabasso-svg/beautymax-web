@@ -27,19 +27,20 @@ model Client {
   email          String?     @unique
   passwordHash   String?
   status         String      @default("pending")
-  referralCode   String?     @unique
+  referralCode   String?
   referredById   String?
   referredBy     Client?     @relation("ClientReferrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals      Client[]    @relation("ClientReferrals")
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   promoCodes     PromoCode[] @relation("ClientPromos")
-  referralReward PromoCode?  @relation("ReferralReward")
+  referralRewards PromoCode[] @relation("ReferralReward")
   orders         Order[]
 
   @@index([status])
   @@index([document])
   @@index([referredById])
+  @@index([referralCode])
 }
 
 model Category {
@@ -156,12 +157,13 @@ model PromoCode {
   orderId   String?
   clientId         String?
   client           Client?   @relation("ClientPromos", fields: [clientId], references: [id], onDelete: SetNull)
-  referredClientId String?   @unique
+  referredClientId String?
   referredClient   Client?   @relation("ReferralReward", fields: [referredClientId], references: [id], onDelete: SetNull)
   createdAt        DateTime  @default(now())
 
   @@index([code])
   @@index([clientId])
+  @@index([referredClientId])
 }
 
 model RouletteDiscount {
