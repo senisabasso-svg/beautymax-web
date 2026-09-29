@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 import { storeConfig } from "@/config/store";
-import { getBrands, getProducts, loadCategories } from "@/lib/catalog";
+import { getBrands, getCategories, getProducts } from "@/lib/catalog";
 
-export const revalidate = 3600;
+export const dynamic = "force-static";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): MetadataRoute.Sitemap {
   const base = storeConfig.siteUrl.replace(/\/$/, "");
   const staticPaths = ["", "/tienda", "/organic-pro", "/herramientas", "/marcas", "/contacto", "/envios", "/terminos", "/privacidad"];
 
@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),
-    ...(await loadCategories()).map((category) => ({
+    ...getCategories().map((category) => ({
       url: `${base}/categoria/${category.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.6,

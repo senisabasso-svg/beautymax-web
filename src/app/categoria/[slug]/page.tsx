@@ -8,8 +8,6 @@ import { getCategories, loadCatalog, loadCategories, getProductsByCategory } fro
 
 type Params = { slug: string };
 
-export const dynamicParams = true;
-
 export function generateStaticParams() {
   return getCategories().map((category) => ({ slug: category.slug }));
 }
