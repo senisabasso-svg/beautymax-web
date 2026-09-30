@@ -10,6 +10,8 @@ import { StoreChrome } from "@/components/layout/StoreChrome";
 import { TopBar } from "@/components/layout/TopBar";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { DiscountWheel } from "@/components/promo/DiscountWheel";
+import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
+import { PwaRegister } from "@/components/pwa/PwaRegister";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Toaster } from "@/components/ui/sonner";
 import { storeConfig } from "@/config/store";
@@ -36,6 +38,23 @@ export const metadata: Metadata = {
     template: `%s · ${storeConfig.shortName}`,
   },
   description: storeConfig.description,
+  applicationName: storeConfig.shortName,
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: storeConfig.shortName,
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     type: "website",
     locale: "es_UY",
@@ -49,6 +68,7 @@ export const viewport: Viewport = {
   themeColor: "#0E0E0E",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -75,6 +95,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         <CatalogHydrator />
         <VisitTracker />
+        <PwaRegister />
         <StoreChrome>
           <TopBar />
           <Header />
@@ -85,6 +106,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <CartDrawer />
           <DiscountWheel />
           <WhatsAppButton />
+          <PwaInstallPrompt />
         </StoreChrome>
         <Toaster />
       </body>

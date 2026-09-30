@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="92" fill="#0E0E0E"/>
+  <text x="256" y="266" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="215" font-weight="700" letter-spacing="5" fill="#F7F4EE">BM</text>
+  <rect x="148.5" y="369" width="215" height="6" fill="#C9A24A"/>
+  <text x="256" y="440" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="41" font-weight="600" letter-spacing="20" fill="#C9A24A">BEAUTYMAX</text>
+</svg>

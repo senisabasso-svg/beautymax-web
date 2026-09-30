@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "placeholders": "node scripts/generate-placeholders.mjs",
+    "pwa:icons": "node scripts/generate-pwa-icons.mjs",
     "api:dev": "npm --prefix api run dev",
     "api:seed": "npm --prefix api run db:seed",
     "export:seed": "npx tsx -e \"import { products } from './src/data/products.ts'; import { writeFileSync } from 'fs'; writeFileSync('api/prisma/seed-products.json', JSON.stringify(products, null, 2)); console.log(products.length);\""
