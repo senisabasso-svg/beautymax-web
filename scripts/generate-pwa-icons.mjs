@@ -1,51 +1,84 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const outDir = join(root, "public/icons");
+const source = join(root, "public/brand/logo-source.jpg");
+const brandDir = join(root, "public/brand");
+const iconDir = join(root, "public/icons");
 
-mkdirSync(outDir, { recursive: true });
+mkdirSync(brandDir, { recursive: true });
+mkdirSync(iconDir, { recursive: true });
 
-function iconSvg(size) {
-  const pad = Math.round(size * 0.14);
-  const fontSize = Math.round(size * 0.42);
-  const subSize = Math.round(size * 0.08);
-  const lineY = Math.round(size * 0.72);
-  const lineW = Math.round(size * 0.42);
-  const cx = size / 2;
+function isPaper(r, g, b) {
+  return r > 245 && g > 245 && b > 245;
+}
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <rect width="${size}" height="${size}" rx="${Math.round(size * 0.18)}" fill="#0E0E0E"/>
-  <text x="${cx}" y="${Math.round(size * 0.52)}" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="700" letter-spacing="${Math.round(size * 0.01)}" fill="#F7F4EE">BM</text>
-  <rect x="${cx - lineW / 2}" y="${lineY}" width="${lineW}" height="${Math.max(2, Math.round(size * 0.012))}" fill="#C9A24A"/>
-  <text x="${cx}" y="${Math.round(size * 0.86)}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${subSize}" font-weight="600" letter-spacing="${Math.round(size * 0.04)}" fill="#C9A24A">BEAUTYMAX</text>
-</svg>`;
+async function circularLogo() {
+  const { data, info } = await sharp(source).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width: w, height: h } = info;
+  let minX = w;
+  let minY = h;
+  let maxX = 0;
+  let maxY = 0;
+
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const i = (y * w + x) * 4;
+      if (isPaper(data[i], data[i + 1], data[i + 2])) continue;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+  }
+
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  const radius = Math.min(maxX - minX, maxY - minY) / 2;
+
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const dist = Math.hypot(x - cx, y - cy);
+      const i = (y * w + x) * 4 + 3;
+      if (dist >= radius) data[i] = 0;
+      else if (dist > radius - 1.5) data[i] = Math.round((255 * (radius - dist)) / 1.5);
+    }
+  }
+
+  return sharp(data, { raw: { width: w, height: h, channels: 4 } })
+    .trim()
+    .png();
+}
+
+const logo = await circularLogo();
+await logo.clone().resize(512, 512).png().toFile(join(brandDir, "logo.png"));
+console.log("wrote public/brand/logo.png");
+
+async function appIcon(size, scale) {
+  const inner = Math.round(size * scale);
+  const logoPng = await logo.clone().resize(inner, inner).png().toBuffer();
+  return sharp({
+    create: {
+      width: size,
+      height: size,
+      channels: 4,
+      background: "#ffffff",
+    },
+  })
+    .composite([{ input: logoPng, gravity: "centre" }])
+    .png();
 }
 
 const sizes = [
-  { name: "icon-192.png", size: 192 },
-  { name: "icon-512.png", size: 512 },
-  { name: "apple-touch-icon.png", size: 180 },
-  { name: "maskable-512.png", size: 512, maskable: true },
+  { name: "icon-192.png", size: 192, scale: 0.92 },
+  { name: "icon-512.png", size: 512, scale: 0.92 },
+  { name: "apple-touch-icon.png", size: 180, scale: 0.92 },
+  { name: "maskable-512.png", size: 512, scale: 0.8 },
 ];
 
 for (const entry of sizes) {
-  const svg = entry.maskable
-    ? iconSvg(entry.size).replace(
-        `rx="${Math.round(entry.size * 0.18)}"`,
-        'rx="0"',
-      )
-    : iconSvg(entry.size);
-
-  await sharp(Buffer.from(svg))
-    .png()
-    .toFile(join(outDir, entry.name));
-
+  await (await appIcon(entry.size, entry.scale)).toFile(join(iconDir, entry.name));
   console.log(`wrote ${entry.name}`);
 }
-
-writeFileSync(join(outDir, "icon.svg"), iconSvg(512));
-console.log("wrote icon.svg");

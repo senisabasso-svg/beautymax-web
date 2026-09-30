@@ -1,5 +1,5 @@
 /* Beautymax PWA service worker */
-const CACHE_VERSION = "beautymax-v1";
+const CACHE_VERSION = "beautymax-v2";
 const PRECACHE = [
   "/",
   "/manifest.webmanifest",
