@@ -8,6 +8,8 @@ import { adminRouter } from "./routes/admin.js";
 import { clientsRouter } from "./routes/clients.js";
 import { categoriesRouter } from "./routes/categories.js";
 import { analyticsRouter } from "./routes/analytics.js";
+import { mediaRouter } from "./routes/media.js";
+import { uploadsRouter } from "./routes/uploads.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -34,6 +36,8 @@ app.use("/categories", categoriesRouter);
 app.use("/orders", ordersRouter);
 app.use("/promo", promoRouter);
 app.use("/analytics", analyticsRouter);
+app.use("/uploads", uploadsRouter);
+app.use("/media", mediaRouter);
 app.use("/admin", adminRouter);
 app.use("/clients", clientsRouter);
 

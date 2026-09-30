@@ -203,3 +203,10 @@ model OrderMilestone {
   @@index([orderId])
   @@index([createdAt])
 }
+
+model StoredImage {
+  id        String   @id @default(cuid())
+  mimeType  String
+  bytes     Bytes
+  createdAt DateTime @default(now())
+}

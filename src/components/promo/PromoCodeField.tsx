@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ export function PromoCodeField({ tone = "light" }: { tone?: "light" | "dark" }) 
   const applied = useAppliedPromo();
   const applyCode = usePromo((state) => state.applyCode);
   const clearApplied = usePromo((state) => state.clearApplied);
-  const available = usePromo((state) => state.codes.filter((item) => !item.usedAt));
+  const codes = usePromo((state) => state.codes);
+  const available = useMemo(() => codes.filter((item) => !item.usedAt), [codes]);
   const [value, setValue] = useState("");
   const [ready, setReady] = useState(false);
 

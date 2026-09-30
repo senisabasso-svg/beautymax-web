@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAdminToken } from "@/lib/api/admin-auth";
-import { apiFetch } from "@/lib/api/client";
+import { ApiError, apiFetch, getApiUrl } from "@/lib/api/client";
 import type { CategoryInfo, Product, Variant } from "@/types/product";
 
 type FormVariant = Variant;
@@ -57,6 +57,7 @@ export function ProductForm({ product }: { product?: Product }) {
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +84,46 @@ export function ProductForm({ product }: { product?: Product }) {
       ...prev,
       variants: prev.variants.map((v, i) => (i === index ? { ...v, ...patch } : v)),
     }));
+  }
+
+  const imageUrls = form.images
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  function setImageUrls(urls: string[]) {
+    setForm((prev) => ({ ...prev, images: urls.join("\n") }));
+  }
+
+  async function onPickPhotos(files: FileList | null) {
+    if (!files?.length) return;
+    const token = getAdminToken();
+    if (!token) return;
+    setUploading(true);
+    setError("");
+    try {
+      const body = new FormData();
+      for (const file of Array.from(files)) body.append("files", file);
+      const res = await fetch(`${getApiUrl()}/uploads`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      });
+      const data = (await res.json().catch(() => ({}))) as { urls?: string[]; error?: string };
+      if (!res.ok || !data.urls?.length) {
+        throw new ApiError(data.error ?? "No se pudo subir la foto", res.status);
+      }
+      const added = data.urls.map((url) => (url.startsWith("http") ? url : `${getApiUrl()}${url}`));
+      setImageUrls(
+        [...imageUrls.filter((url) => url !== "/productos/placeholder.svg"), ...added].filter(
+          (url, index, all) => all.indexOf(url) === index,
+        ),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo subir la foto");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function onSubmit(e: FormEvent) {
@@ -235,12 +276,39 @@ export function ProductForm({ product }: { product?: Product }) {
             className="min-h-24 w-full rounded-md border border-white/20 bg-black px-3 py-2 text-cream"
           />
         </Field>
-        <Field label="Imágenes (una URL por línea)">
-          <textarea
-            value={form.images}
-            onChange={(e) => setForm({ ...form, images: e.target.value })}
-            className="min-h-24 w-full rounded-md border border-white/20 bg-black px-3 py-2 text-cream"
+        <Field label="Fotos del producto">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
+            multiple
+            disabled={uploading}
+            onChange={(e) => {
+              void onPickPhotos(e.target.files);
+              e.target.value = "";
+            }}
+            className="block w-full text-sm text-cream/70 file:mr-3 file:border file:border-gold/40 file:bg-transparent file:px-3 file:py-2 file:text-xs file:uppercase file:tracking-wider file:text-gold"
           />
+          <p className="text-xs text-cream/45">
+            Desde la compu: JPG, PNG, WEBP o HEIC del iPhone. La foto HEIC se convierte sola a JPG.
+          </p>
+          {uploading ? <p className="text-xs text-gold">Subiendo fotos…</p> : null}
+          {imageUrls.length ? (
+            <ul className="flex flex-wrap gap-2">
+              {imageUrls.map((url) => (
+                <li key={url} className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="h-20 w-20 border border-white/15 object-cover" />
+                  <button
+                    type="button"
+                    className="mt-1 block text-[11px] text-red-400 hover:underline"
+                    onClick={() => setImageUrls(imageUrls.filter((item) => item !== url))}
+                  >
+                    Quitar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </Field>
       </div>
 
