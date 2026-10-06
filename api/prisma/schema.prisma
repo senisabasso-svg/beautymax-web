@@ -31,6 +31,8 @@ model Client {
   referredById   String?
   referredBy     Client?     @relation("ClientReferrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals      Client[]    @relation("ClientReferrals")
+  emClienteId    String?     @unique
+  emCodigo       String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   promoCodes     PromoCode[] @relation("ClientPromos")
@@ -41,6 +43,7 @@ model Client {
   @@index([document])
   @@index([referredById])
   @@index([referralCode])
+  @@index([emCodigo])
 }
 
 model Category {
@@ -75,12 +78,17 @@ model Product {
   featured          Boolean     @default(false)
   requiresSelection Boolean     @default(false)
   active            Boolean     @default(true)
+  source            String      @default("manual")
+  emArticuloId      String?     @unique
+  emCodigo          String?     @unique
+  emSyncedAt        DateTime?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   variants          Variant[]
   orderItems        OrderItem[]
 
   @@index([categoryId])
+  @@index([source])
 }
 
 model Variant {
@@ -95,9 +103,12 @@ model Variant {
   colorName      String?
   colorHex       String?
   sortOrder      Int         @default(0)
+  emArticuloId   String?
   orderItems     OrderItem[]
 
   @@index([productId])
+  @@index([sku])
+  @@index([emArticuloId])
 }
 
 model Order {
@@ -122,12 +133,19 @@ model Order {
   notes           String?
   clientId        String?
   client          Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  emTerminal      String?
+  emTipoDoc       String?
+  emNroDoc        String?
+  emSyncedAt      DateTime?
+  emSyncStatus    String?
+  emSyncError     String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           OrderItem[]
   milestones      OrderMilestone[]
 
   @@index([clientId])
+  @@index([emSyncStatus])
 }
 
 model OrderItem {
@@ -209,4 +227,12 @@ model StoredImage {
   mimeType  String
   bytes     Bytes
   createdAt DateTime @default(now())
+}
+
+/// Cursores de sincronización con Easy Management (HYC).
+model EmSyncCursor {
+  id        String    @id
+  lastAt    DateTime?
+  summary   String?
+  updatedAt DateTime  @updatedAt
 }

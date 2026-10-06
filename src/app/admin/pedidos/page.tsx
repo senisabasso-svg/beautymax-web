@@ -20,6 +20,11 @@ type Order = {
   payment: string;
   total: number;
   createdAt: string;
+  emSyncStatus?: string | null;
+  emNroDoc?: string | null;
+  emTipoDoc?: string | null;
+  emTerminal?: string | null;
+  emSyncError?: string | null;
   items: Array<{ name: string; variantLabel: string; quantity: number; lineTotal: number }>;
 };
 
@@ -46,6 +51,17 @@ export default function AdminOrdersPage() {
       token,
       body: JSON.stringify({ status }),
     });
+    load();
+  }
+
+  async function pushEm(id: string) {
+    const token = getAdminToken();
+    if (!token) return;
+    try {
+      await apiFetch(`/em/orders/${id}/push`, { method: "POST", token });
+    } catch {
+      // el estado queda en el pedido
+    }
     load();
   }
 
@@ -90,6 +106,27 @@ export default function AdminOrdersPage() {
                     </li>
                   ))}
                 </ul>
+                <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-white/10 pt-3 text-xs text-cream/50">
+                  <span>
+                    EM:{" "}
+                    <span className="text-cream/80">
+                      {order.emSyncStatus || "sin enviar"}
+                      {order.emNroDoc
+                        ? ` · ${order.emTerminal || ""}/${order.emTipoDoc || ""}/${order.emNroDoc}`
+                        : ""}
+                    </span>
+                  </span>
+                  {order.emSyncError ? <span className="text-red-300">{order.emSyncError}</span> : null}
+                  {order.emSyncStatus !== "synced" ? (
+                    <button
+                      type="button"
+                      onClick={() => pushEm(order.id)}
+                      className="text-gold underline-offset-2 hover:underline"
+                    >
+                      Enviar a EM
+                    </button>
+                  ) : null}
+                </div>
               </article>
             ))
           )}

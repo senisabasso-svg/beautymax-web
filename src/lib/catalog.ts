@@ -1,11 +1,10 @@
 import { brands, categories } from "@/data/taxonomy";
-import { products as localProducts } from "@/data/products";
 import { brandSlug } from "@/lib/utils";
 import type { CategoryInfo, Product } from "@/types/product";
 import { getApiUrl } from "@/lib/api/client";
 
-/** Catálogo en memoria: arranca local y se puede hidratar desde el API. */
-let catalog: Product[] = localProducts;
+/** Catálogo en memoria: solo productos del API (Easy Management). */
+let catalog: Product[] = [];
 let categoryCatalog: CategoryInfo[] = categories;
 
 export function replaceCatalog(products: Product[]) {
@@ -22,15 +21,15 @@ export async function loadCatalog(): Promise<Product[]> {
     const res = await fetch(`${base}/products`, { cache: "no-store" });
     if (!res.ok) throw new Error("API catalog error");
     const data = (await res.json()) as Product[];
-    if (Array.isArray(data) && data.length > 0) {
+    if (Array.isArray(data)) {
       replaceCatalog(data);
       return data;
     }
   } catch {
-    // fallback local
+    // Sin fallback local: la tienda solo muestra lo sincronizado desde EM.
   }
-  replaceCatalog(localProducts);
-  return localProducts;
+  replaceCatalog([]);
+  return [];
 }
 
 export function getProductBySlug(slug: string) {

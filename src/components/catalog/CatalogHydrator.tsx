@@ -11,10 +11,10 @@ export function CatalogHydrator() {
     let cancelled = false;
     apiFetch<Product[]>("/products")
       .then((products) => {
-        if (!cancelled && products.length) replaceCatalog(products);
+        if (!cancelled) replaceCatalog(Array.isArray(products) ? products : []);
       })
       .catch(() => {
-        /* sin API: queda el catálogo local */
+        if (!cancelled) replaceCatalog([]);
       });
     return () => {
       cancelled = true;

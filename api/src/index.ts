@@ -10,6 +10,7 @@ import { categoriesRouter } from "./routes/categories.js";
 import { analyticsRouter } from "./routes/analytics.js";
 import { mediaRouter } from "./routes/media.js";
 import { uploadsRouter } from "./routes/uploads.js";
+import { emRouter } from "./routes/em.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -40,6 +41,7 @@ app.use("/uploads", uploadsRouter);
 app.use("/media", mediaRouter);
 app.use("/admin", adminRouter);
 app.use("/clients", clientsRouter);
+app.use("/em", emRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });

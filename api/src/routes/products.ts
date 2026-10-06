@@ -13,7 +13,8 @@ productsRouter.get("/", async (req, res) => {
 
   const products = await prisma.product.findMany({
     where: {
-      ...(isAdmin ? {} : { active: true }),
+      // Tienda pública: solo productos sincronizados desde Easy Management.
+      ...(isAdmin ? {} : { active: true, source: "em" }),
       ...(typeof category === "string" ? { category } : {}),
       ...(typeof brand === "string" ? { brand: { equals: brand, mode: "insensitive" } } : {}),
       ...(featured === "1" || featured === "true" ? { featured: true } : {}),
@@ -39,6 +40,7 @@ productsRouter.get("/:slug", async (req, res) => {
     where: {
       OR: [{ slug: req.params.slug }, { id: req.params.slug }],
       active: true,
+      source: "em",
     },
     include: { variants: { orderBy: { sortOrder: "asc" } } },
   });

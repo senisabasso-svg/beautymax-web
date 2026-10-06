@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { maybeAutoPushOrder } from "../integrations/em/index.js";
 import { prisma } from "../lib/prisma.js";
 import { readClientId, requireAuth } from "../middleware/auth.js";
 
@@ -60,7 +61,12 @@ ordersRouter.post("/", async (req, res) => {
       where: { id: item.variantId },
       include: { product: true },
     });
-    if (!variant || !variant.product.active || variant.productId !== item.productId) {
+    if (
+      !variant ||
+      !variant.product.active ||
+      variant.product.source !== "em" ||
+      variant.productId !== item.productId
+    ) {
       return res.status(400).json({ error: `Variante no disponible: ${item.variantId}` });
     }
     if (variant.stock < item.quantity) {
@@ -160,6 +166,8 @@ ordersRouter.post("/", async (req, res) => {
 
     return created;
   });
+
+  void maybeAutoPushOrder(order.id);
 
   return res.status(201).json({
     id: order.publicId,
