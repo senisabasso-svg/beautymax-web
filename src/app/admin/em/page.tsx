@@ -180,9 +180,15 @@ export default function AdminEmPage() {
             {busy ? <p className="text-sm text-cream/50">Ejecutando: {busy}…</p> : null}
             {message ? <p className="text-sm text-gold">{message}</p> : null}
 
-            {status.cursors.length > 0 ? (
-              <div>
-                <h2 className="mb-3 font-serif text-2xl">Cursores</h2>
+            <div>
+              <h2 className="mb-3 font-serif text-2xl">Cursores</h2>
+              {!status.cursors.some((c) => c.id === "products") ? (
+                <p className="mb-3 border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100">
+                  Todavía no hay sync de productos. Tocá <strong>Sync productos (full)</strong> — vincular clientes no
+                  publica el catálogo en la tienda.
+                </p>
+              ) : null}
+              {status.cursors.length > 0 ? (
                 <div className="divide-y divide-white/10 border border-white/10">
                   {status.cursors.map((cursor) => {
                     let summary: SyncResult | null = null;
@@ -210,8 +216,10 @@ export default function AdminEmPage() {
                     );
                   })}
                 </div>
-              </div>
-            ) : null}
+              ) : (
+                <p className="text-sm text-cream/50">Sin sincronizaciones todavía.</p>
+              )}
+            </div>
 
             {lastResult ? (
               <pre className="overflow-x-auto border border-white/10 bg-black/40 p-4 text-xs text-cream/70">

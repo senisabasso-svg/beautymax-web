@@ -43,6 +43,9 @@ export function Catalog({
   const [query, setQuery] = useState(qParam);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [remoteCategories, setRemoteCategories] = useState<CategoryInfo[] | null>(null);
+  // Catálogo vivo desde el API (el HTML estático del build puede estar vacío).
+  const [liveProducts, setLiveProducts] = useState<Product[]>(products);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
   const category = lockedCategory ?? params.get("categoria") ?? "";
   const brand = params.get("marca") ?? "";
   const sort = (params.get("orden") as Sort) || "destacados";
@@ -55,17 +58,26 @@ export function Catalog({
 
   useEffect(() => {
     let cancelled = false;
-    apiFetch<CategoryInfo[]>("/categories")
-      .then((items) => {
-        if (!cancelled) setRemoteCategories(items);
+    setLoadingCatalog(true);
+    Promise.all([
+      apiFetch<Product[]>("/products"),
+      apiFetch<CategoryInfo[]>("/categories").catch(() => [] as CategoryInfo[]),
+    ])
+      .then(([nextProducts, items]) => {
+        if (cancelled) return;
+        setLiveProducts(Array.isArray(nextProducts) ? nextProducts : []);
+        if (items.length) setRemoteCategories(items);
       })
       .catch(() => {
-        /* sin API: quedan las categorías locales */
+        if (!cancelled) setLiveProducts(products);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingCatalog(false);
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [products]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -85,9 +97,9 @@ export function Catalog({
   }
 
   const brands = useMemo(() => {
-    const names = Array.from(new Set(products.map((product) => product.brand)));
+    const names = Array.from(new Set(liveProducts.map((product) => product.brand)));
     return names.sort((a, b) => a.localeCompare(b, "es"));
-  }, [products]);
+  }, [liveProducts]);
 
   const categoryNames = useMemo(() => {
     const source = remoteCategories ?? allCategories;
@@ -95,17 +107,17 @@ export function Catalog({
   }, [remoteCategories]);
 
   const categoryOptions = useMemo(() => {
-    const slugs = Array.from(new Set(products.map((product) => product.category)));
+    const slugs = Array.from(new Set(liveProducts.map((product) => product.category)));
     return slugs
       .filter((slug) => !remoteCategories || remoteCategories.some((item) => item.slug === slug))
       .map((slug) => ({ slug, name: categoryNames.get(slug) ?? slug }));
-  }, [products, categoryNames, remoteCategories]);
+  }, [liveProducts, categoryNames, remoteCategories]);
 
   const filtered = useMemo(() => {
     const minValue = min ? Number(min) : undefined;
     const maxValue = max ? Number(max) : undefined;
     const term = qParam.trim().toLowerCase();
-    const list = products.filter((product) => {
+    const list = liveProducts.filter((product) => {
       if (!lockedCategory && category && product.category !== category) return false;
       if (brand && brandSlug(product.brand) !== brand) return false;
       if (term) {
@@ -120,7 +132,7 @@ export function Catalog({
       return matchesPrice;
     });
     return sortProducts(list, sort);
-  }, [products, category, brand, qParam, min, max, sort, lockedCategory]);
+  }, [liveProducts, category, brand, qParam, min, max, sort, lockedCategory]);
 
   const activeFilters = Number(Boolean(brand)) + Number(Boolean(min || max)) + Number(Boolean(!lockedCategory && category));
 
@@ -240,13 +252,17 @@ export function Catalog({
                 </select>
               </div>
             </div>
-            {filtered.length === 0 ? (
+            {loadingCatalog ? (
+              <div className="border border-ink/10 bg-white px-6 py-16 text-center">
+                <p className="font-serif text-3xl text-ink">Cargando catálogo…</p>
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="border border-ink/10 bg-white px-6 py-16 text-center">
                 <p className="font-serif text-3xl text-ink">
                   {qParam ? `No encontramos resultados para «${qParam}».` : "Todavía no hay productos en esta selección."}
                 </p>
                 <p className="mx-auto mt-3 max-w-md text-sm text-muted">
-                  Probá con otra búsqueda o escribinos: te armamos el pedido con lo que uses en el salón.
+                  Si acabás de sincronizar Easy Management, revisá Admin → Productos. Las fichas se generan al redesplegar el sitio.
                 </p>
                 <button
                   type="button"

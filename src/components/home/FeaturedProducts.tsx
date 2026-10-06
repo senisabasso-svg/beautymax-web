@@ -1,13 +1,33 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { SectionHeading } from "@/components/brand/SectionHeading";
 import { Reveal } from "@/components/motion/Reveal";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Container } from "@/components/ui/container";
-import { loadCatalog } from "@/lib/catalog";
+import { apiFetch } from "@/lib/api/client";
+import type { Product } from "@/types/product";
 
-export async function FeaturedProducts() {
-  const catalog = await loadCatalog();
-  const products = catalog.filter((product) => product.featured).slice(0, 8);
+export function FeaturedProducts() {
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<Product[]>("/products")
+      .then((items) => {
+        if (cancelled) return;
+        setProducts(items.filter((product) => product.featured).slice(0, 8));
+      })
+      .catch(() => {
+        if (!cancelled) setProducts([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!products.length) return null;
 
   return (
     <section className="bg-white py-16 md:py-24">
@@ -27,7 +47,10 @@ export async function FeaturedProducts() {
           ))}
         </div>
         <div className="mt-10 text-center">
-          <Link href="/tienda" className="text-[12px] font-semibold uppercase tracking-ui text-ink underline decoration-gold decoration-2 underline-offset-4">
+          <Link
+            href="/tienda"
+            className="text-[12px] font-semibold uppercase tracking-ui text-ink underline decoration-gold decoration-2 underline-offset-4"
+          >
             Ver toda la tienda
           </Link>
         </div>
