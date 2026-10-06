@@ -6,6 +6,7 @@ import type {
   EmCliente,
   EmDoc,
   EmDocRespuesta,
+  EmEnvelope,
   EmFamilia,
 } from "./types.js";
 
@@ -29,6 +30,29 @@ export function epochCursor() {
   return new Date("2000-01-01T00:00:00.000Z");
 }
 
+function authHeaders(config: EmConfig) {
+  const headers = new Headers();
+  const headerName = config.tokenHeader || "Authorization";
+  const raw = config.token.trim();
+  if (headerName.toLowerCase() === "authorization") {
+    headers.set(headerName, raw.toLowerCase().startsWith("bearer ") ? raw : `Bearer ${raw}`);
+  } else {
+    headers.set(headerName, raw);
+  }
+  return headers;
+}
+
+function unwrapElemento<T>(payload: unknown): T {
+  if (payload && typeof payload === "object" && "elemento" in payload) {
+    const envelope = payload as EmEnvelope<T>;
+    if (envelope.ok === false) {
+      throw new Error(envelope.mensaje || "Easy Management devolvió ok=false");
+    }
+    return envelope.elemento as T;
+  }
+  return payload as T;
+}
+
 async function emFetch<T>(
   path: string,
   init: RequestInit = {},
@@ -36,8 +60,10 @@ async function emFetch<T>(
 ): Promise<T> {
   assertEmConfigured(config);
   const url = `${config.baseUrl}/${path.replace(/^\//, "")}`;
-  const headers = new Headers(init.headers);
-  headers.set(config.tokenHeader, config.token);
+  const headers = authHeaders(config);
+  for (const [key, value] of new Headers(init.headers).entries()) {
+    headers.set(key, value);
+  }
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
@@ -55,7 +81,8 @@ async function emFetch<T>(
       );
     }
     if (!text) return null as T;
-    return JSON.parse(text) as T;
+    const parsed = JSON.parse(text) as unknown;
+    return unwrapElemento<T>(parsed);
   } catch (error) {
     if (error instanceof EmApiError) throw error;
     if (error instanceof Error && error.name === "AbortError") {
@@ -128,15 +155,21 @@ export async function getClienteByCodigo(codigo: string, config = getEmConfig())
 }
 
 export async function createPedido(doc: EmDoc, config = getEmConfig()) {
-  return emFetch<EmDocRespuesta>("integracion/pedido", {
-    method: "POST",
-    body: JSON.stringify(doc),
-  }, config);
+  return emFetch<EmDocRespuesta>(
+    "integracion/pedido",
+    {
+      method: "POST",
+      body: JSON.stringify(doc),
+    },
+    config,
+  );
 }
 
 export async function pingEm(config = getEmConfig()) {
   assertEmConfigured(config);
-  // Endpoint liviano para validar token/URL.
-  await listFamilias(config);
-  return { ok: true as const };
+  const familias = await listFamilias(config);
+  return {
+    ok: true as const,
+    familias: Array.isArray(familias) ? familias.length : 0,
+  };
 }

@@ -26,9 +26,9 @@ export async function syncStock(options: { full?: boolean } = {}): Promise<SyncR
   let newest = desde;
   for (const row of rows) {
     try {
-      const emId = String(row.ArticuloId);
-      const codigo = row.ArticuloCodigo?.trim();
-      const stock = stockToInt(row.Stock);
+      const emId = String(row.articuloId);
+      const codigo = row.articuloCodigo?.trim();
+      const stock = stockToInt(row.stock);
 
       const variant =
         (await prisma.variant.findFirst({ where: { emArticuloId: emId } })) ||
@@ -54,21 +54,22 @@ export async function syncStock(options: { full?: boolean } = {}): Promise<SyncR
       await prisma.product.update({
         where: { id: variant.productId },
         data: {
-          active: row.Publicar,
+          // No apagar por `publicar` si sincronizamos todo el padrón activo.
+          ...(config.soloWeb ? { active: row.publicar } : {}),
           emSyncedAt: new Date(),
           ...(codigo ? { emCodigo: codigo, emArticuloId: emId } : { emArticuloId: emId }),
         },
       });
       result.updated += 1;
-      if (row.Modificado) {
-        const mod = new Date(row.Modificado);
+      if (row.modificado) {
+        const mod = new Date(row.modificado);
         if (!Number.isNaN(mod.getTime()) && mod > newest) newest = mod;
       } else {
         newest = new Date();
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";
-      result.errors.push(`Stock ${row.ArticuloId}: ${message}`);
+      result.errors.push(`Stock ${row.articuloId}: ${message}`);
     }
   }
 

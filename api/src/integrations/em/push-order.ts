@@ -201,9 +201,9 @@ export async function pushOrderToEm(orderId: string) {
 
   try {
     const response = await createPedido(doc, config);
-    const terminal = String(response.Terminal ?? response.terminal ?? config.terminal);
-    const tipoDoc = String(response.TipoDoc ?? response.tipoDoc ?? config.tipoDocPedido);
-    const nroDoc = String(response.NroDoc ?? response.nroDoc ?? "");
+    const terminal = String(response.terminal ?? config.terminal);
+    const tipoDoc = String(response.tipoDoc ?? config.tipoDocPedido);
+    const nroDoc = String(response.nroDoc ?? "");
 
     const updated = await prisma.order.update({
       where: { id: order.id },

@@ -111,6 +111,10 @@ export default function AdminEmPage() {
                 <span className="text-cream">{status.terminal}</span> · Usuario{" "}
                 <span className="text-cream">{status.usuario}</span>
               </p>
+              <p className="mt-1 text-cream/50">
+                Auth: header Authorization Bearer. Si Solo web=sí y EM no marca publicarWeb, el sync trae 0
+                productos.
+              </p>
               <p>
                 Brand / categoría default:{" "}
                 <span className="text-cream">

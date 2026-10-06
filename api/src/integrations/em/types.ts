@@ -1,68 +1,68 @@
 export type EmFamilia = {
-  Id: number;
-  Codigo: string;
-  Nombre: string;
-  CodigoPadre?: string | null;
-  IdPadre?: number;
-  Activa?: boolean;
+  id: number;
+  codigo: string;
+  nombre: string;
+  codigoPadre?: string | null;
+  idPadre?: number;
+  activa?: boolean;
 };
 
 export type EmArticulo = {
-  Id: number;
-  Codigo: string;
-  CodigosBarra?: string | null;
-  Nombre: string;
-  Descripcion1?: string | null;
-  Descripcion2?: string | null;
-  Descripcion3?: string | null;
-  Moneda?: string | null;
-  PrecioConImp: number;
-  PrecioSinImp: number;
-  ImpuestoCodigo: number;
-  ImpuestoTasa: number;
-  Informacion?: string | null;
-  Familia?: EmFamilia | null;
-  Stock: number;
-  Publicar: boolean;
-  UnidadMedida?: string | null;
-  UnidadesXPack?: number;
+  id: number;
+  codigo: string;
+  codigosBarra?: string | null;
+  nombre: string;
+  descripcion1?: string | null;
+  descripcion2?: string | null;
+  descripcion3?: string | null;
+  moneda?: string | null;
+  precioConImp: number;
+  precioSinImp: number;
+  impuestoCodigo: number;
+  impuestoTasa: number;
+  informacion?: string | null;
+  familia?: EmFamilia | null;
+  stock: number;
+  publicar: boolean;
+  unidadMedida?: string | null;
+  unidadesXPack?: number;
 };
 
 export type EmArticuloImagen = {
-  ArticuloId: number;
-  ArticuloCodigo: string;
-  ArticuloNombre: string;
-  Modificado: string;
-  PesoKb: number;
-  ImagenBase64: string;
+  articuloId: number;
+  articuloCodigo: string;
+  articuloNombre: string;
+  modificado: string;
+  pesoKb: number;
+  imagenBase64: string;
 };
 
 export type EmArticuloStock = {
-  ArticuloId: number;
-  ArticuloCodigo: string;
-  ArticuloNombre: string;
-  Modificado: string;
-  Stock: number;
-  Publicar: boolean;
+  articuloId: number;
+  articuloCodigo: string;
+  articuloNombre: string;
+  modificado: string;
+  stock: number;
+  publicar: boolean;
 };
 
 export type EmCliente = {
-  Id: number;
-  Codigo: string;
-  Nombre: string;
-  TipoDocumento: number;
-  Documento: string;
-  RazonSocial?: string | null;
-  Direccion?: string | null;
-  Ciudad?: string | null;
-  ListaPrecioCodigo?: string | null;
-  DescuentoGeneral?: number;
-  Telefono?: string | null;
-  EnviarFactura?: boolean;
-  EnviarFacturaMail?: string | null;
-  EsGenerico?: boolean;
-  Activo?: boolean;
-  Observaciones?: string | null;
+  id: number;
+  codigo: string;
+  nombre: string;
+  tipoDocumento: number;
+  documento: string;
+  razonSocial?: string | null;
+  direccion?: string | null;
+  ciudad?: string | null;
+  listaPrecioCodigo?: string | null;
+  descuentoGeneral?: number;
+  telefono?: string | null;
+  enviarFactura?: boolean;
+  enviarFacturaMail?: string | null;
+  esGenerico?: boolean;
+  activo?: boolean;
+  observaciones?: string | null;
 };
 
 export type EmDocItem = {
@@ -119,9 +119,6 @@ export type EmDoc = {
 };
 
 export type EmDocRespuesta = {
-  Terminal?: string;
-  TipoDoc?: string;
-  NroDoc?: number | string;
   terminal?: string;
   tipoDoc?: string;
   nroDoc?: number | string;
@@ -135,4 +132,10 @@ export type SyncResult = {
   errors: string[];
   fetched: number;
   cursor: string | null;
+};
+
+export type EmEnvelope<T> = {
+  ok?: boolean;
+  mensaje?: string;
+  elemento?: T;
 };

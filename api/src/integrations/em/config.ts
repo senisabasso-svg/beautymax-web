@@ -36,10 +36,12 @@ export function getEmConfig(): EmConfig {
     enabled: envBool("EM_ENABLED", Boolean(baseUrl && token)),
     baseUrl,
     token,
-    tokenHeader: process.env.EM_TOKEN_HEADER?.trim() || "Token",
+    // Easy Management responde 404 si se usa el header "Token"; usa Authorization Bearer.
+    tokenHeader: process.env.EM_TOKEN_HEADER?.trim() || "Authorization",
     listaPrecio: process.env.EM_LISTA_PRECIO ?? "",
     deposito: process.env.EM_DEPOSITO?.trim() || null,
-    soloWeb: envBool("EM_SOLO_WEB", true),
+    // En Beautymax hoy no hay artículos con publicarWeb; default false trae activos de VENTA.
+    soloWeb: envBool("EM_SOLO_WEB", false),
     tipoDocPedido: process.env.EM_TIPO_DOC_PEDIDO ?? "",
     terminal: process.env.EM_TERMINAL ?? "A",
     usuario: process.env.EM_USUARIO ?? "web",

@@ -23,9 +23,9 @@ export async function syncClients(): Promise<SyncResult> {
 
   for (const row of rows) {
     try {
-      const emId = String(row.Id);
-      const document = row.Documento?.trim();
-      const email = row.EnviarFacturaMail?.trim().toLowerCase() || null;
+      const emId = String(row.id);
+      const document = row.documento?.trim();
+      const email = row.enviarFacturaMail?.trim().toLowerCase() || null;
 
       const existing =
         (await prisma.client.findFirst({ where: { emClienteId: emId } })) ||
@@ -43,13 +43,13 @@ export async function syncClients(): Promise<SyncResult> {
         where: { id: existing.id },
         data: {
           emClienteId: emId,
-          emCodigo: row.Codigo || existing.emCodigo,
+          emCodigo: row.codigo || existing.emCodigo,
         },
       });
       result.updated += 1;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";
-      result.errors.push(`Cliente ${row.Id}: ${message}`);
+      result.errors.push(`Cliente ${row.id}: ${message}`);
     }
   }
 

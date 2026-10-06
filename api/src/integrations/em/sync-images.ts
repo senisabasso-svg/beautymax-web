@@ -31,17 +31,17 @@ export async function syncImages(options: { full?: boolean } = {}): Promise<Sync
   let newest = desde;
   for (const row of rows) {
     try {
-      if (!row.ImagenBase64?.trim()) {
+      if (!row.imagenBase64?.trim()) {
         result.skipped += 1;
         continue;
       }
 
-      const emId = String(row.ArticuloId);
+      const emId = String(row.articuloId);
       const product = await prisma.product.findFirst({
         where: {
           OR: [
             { emArticuloId: emId },
-            ...(row.ArticuloCodigo ? [{ emCodigo: row.ArticuloCodigo }] : []),
+            ...(row.articuloCodigo ? [{ emCodigo: row.articuloCodigo }] : []),
           ],
         },
       });
@@ -50,7 +50,7 @@ export async function syncImages(options: { full?: boolean } = {}): Promise<Sync
         continue;
       }
 
-      const buffer = decodeBase64Image(row.ImagenBase64);
+      const buffer = decodeBase64Image(row.imagenBase64);
       const prepared = await prepareProductPhoto(buffer);
       const saved = await prisma.storedImage.create({
         data: { mimeType: prepared.mimeType, bytes: prepared.bytes },
@@ -68,15 +68,15 @@ export async function syncImages(options: { full?: boolean } = {}): Promise<Sync
       });
       result.updated += 1;
 
-      if (row.Modificado) {
-        const mod = new Date(row.Modificado);
+      if (row.modificado) {
+        const mod = new Date(row.modificado);
         if (!Number.isNaN(mod.getTime()) && mod > newest) newest = mod;
       } else {
         newest = new Date();
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";
-      result.errors.push(`Imagen ${row.ArticuloId}: ${message}`);
+      result.errors.push(`Imagen ${row.articuloId}: ${message}`);
     }
   }
 

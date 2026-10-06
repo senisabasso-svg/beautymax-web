@@ -67,9 +67,14 @@ async function resolveCategory(familiaNombre?: string | null) {
   return fallback;
 }
 
+function isWebActive(article: EmArticulo, soloWeb: boolean) {
+  // Si pedimos solo web, respetamos `publicar`. Si no, todo lo activo de EM sale a la tienda.
+  return soloWeb ? Boolean(article.publicar) : true;
+}
+
 async function findExistingProduct(article: EmArticulo) {
-  const emId = String(article.Id);
-  const codigo = article.Codigo?.trim();
+  const emId = String(article.id);
+  const codigo = article.codigo?.trim();
 
   const byEmId = await prisma.product.findFirst({
     where: { emArticuloId: emId },
@@ -96,20 +101,21 @@ async function findExistingProduct(article: EmArticulo) {
 
 async function upsertArticle(article: EmArticulo): Promise<"created" | "updated" | "skipped"> {
   const config = getEmConfig();
-  const codigo = article.Codigo?.trim();
+  const codigo = article.codigo?.trim();
   if (!codigo) return "skipped";
 
-  const name = textOr(article.Nombre, codigo);
+  const name = textOr(article.nombre, codigo);
   const description = textOr(
-    article.Informacion || article.Descripcion1 || article.Descripcion2,
+    article.informacion || article.descripcion1 || article.descripcion2,
     name,
   );
-  const shortDescription = textOr(article.Descripcion1 || article.Descripcion2, name).slice(0, 280);
-  const label = textOr(article.UnidadMedida, "Único");
-  const price = moneyToInt(article.PrecioConImp);
-  const stock = stockToInt(article.Stock);
-  const category = await resolveCategory(article.Familia?.Nombre);
-  const emId = String(article.Id);
+  const shortDescription = textOr(article.descripcion1 || article.descripcion2, name).slice(0, 280);
+  const label = textOr(article.unidadMedida, "Único");
+  const price = moneyToInt(article.precioConImp);
+  const stock = stockToInt(article.stock);
+  const category = await resolveCategory(article.familia?.nombre);
+  const emId = String(article.id);
+  const active = isWebActive(article, config.soloWeb);
   const existing = await findExistingProduct(article);
   const now = new Date();
 
@@ -125,7 +131,7 @@ async function upsertArticle(article: EmArticulo): Promise<"created" | "updated"
         shortDescription,
         description,
         images: ["/productos/placeholder.svg"],
-        active: Boolean(article.Publicar),
+        active,
         source: "em",
         emArticuloId: emId,
         emCodigo: codigo,
@@ -159,7 +165,7 @@ async function upsertArticle(article: EmArticulo): Promise<"created" | "updated"
       ...(keepManualCopy
         ? {
             // Conservamos textos/fotos cargados a mano; precio/stock vienen de EM.
-            active: Boolean(article.Publicar),
+            active,
           }
         : {
             name,
@@ -167,7 +173,7 @@ async function upsertArticle(article: EmArticulo): Promise<"created" | "updated"
             categoryId: category.id,
             shortDescription,
             description,
-            active: Boolean(article.Publicar),
+            active,
           }),
       source: "em",
       emArticuloId: emId,
@@ -223,14 +229,14 @@ export async function syncProducts(options: { full?: boolean } = {}): Promise<Sy
   for (const article of articles) {
     try {
       const status = await upsertArticle(article);
-      if (article.Id != null) seenEmIds.add(String(article.Id));
+      if (article.id != null) seenEmIds.add(String(article.id));
       if (status === "created") result.created += 1;
       else if (status === "updated") result.updated += 1;
       else result.skipped += 1;
       newest = new Date();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";
-      result.errors.push(`Artículo ${article.Id}/${article.Codigo}: ${message}`);
+      result.errors.push(`Artículo ${article.id}/${article.codigo}: ${message}`);
     }
   }
 
