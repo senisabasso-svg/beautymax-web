@@ -154,6 +154,23 @@ export async function getClienteByCodigo(codigo: string, config = getEmConfig())
   );
 }
 
+export async function getClienteById(id: string | number, config = getEmConfig()) {
+  return emFetch<EmCliente>(`integracion/clientes/id/${encodeURIComponent(String(id))}`, {}, config);
+}
+
+export async function getArticuloById(id: string | number, config = getEmConfig()) {
+  const lista = encodeURIComponent(config.listaPrecio);
+  const path = withDeposito(
+    `integracion/articulos/id/${encodeURIComponent(String(id))}/${lista}`,
+    config.deposito,
+  );
+  return emFetch<EmArticulo>(path, {}, config);
+}
+
+export async function listCiudades(activos = true, config = getEmConfig()) {
+  return emFetch<string[]>(`integracion/clientes/ciudades/${activos}`, {}, config);
+}
+
 export async function createPedido(doc: EmDoc, config = getEmConfig()) {
   return emFetch<EmDocRespuesta>(
     "integracion/pedido",

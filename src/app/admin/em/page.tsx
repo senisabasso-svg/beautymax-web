@@ -37,11 +37,93 @@ type SyncResult = {
   cursor: string | null;
 };
 
+type RemoteKind = "clientes" | "articulos" | "stock" | "familias" | "imagenes";
+
+type RemoteListResponse = {
+  count: number;
+  limit?: number;
+  offset?: number;
+  items: Array<Record<string, unknown>>;
+  filtros?: Record<string, unknown>;
+};
+
+const remoteTabs: Array<{ id: RemoteKind; label: string }> = [
+  { id: "clientes", label: "Clientes EM" },
+  { id: "articulos", label: "Artículos EM" },
+  { id: "stock", label: "Stock EM" },
+  { id: "familias", label: "Familias" },
+  { id: "imagenes", label: "Imágenes" },
+];
+
+function remotePath(kind: RemoteKind, clientsAll: boolean) {
+  if (kind === "clientes") {
+    return `/em/remote/clientes?limit=200&offset=0${clientsAll ? "&all=1" : ""}`;
+  }
+  if (kind === "articulos") return "/em/remote/articulos?full=1&limit=200&offset=0";
+  if (kind === "stock") return "/em/remote/stock?full=1&limit=200&offset=0";
+  if (kind === "familias") return "/em/remote/familias";
+  return "/em/remote/imagenes?full=1&limit=200&offset=0";
+}
+
+function previewRows(kind: RemoteKind, items: Array<Record<string, unknown>>) {
+  return items.map((item) => {
+    if (kind === "clientes") {
+      return {
+        id: String(item.id ?? ""),
+        codigo: String(item.codigo ?? ""),
+        nombre: String(item.nombre ?? ""),
+        documento: String(item.documento ?? ""),
+        ciudad: String(item.ciudad ?? ""),
+        activo: String(item.activo ?? ""),
+      };
+    }
+    if (kind === "articulos") {
+      const familia = item.familia as { nombre?: string } | null | undefined;
+      return {
+        id: String(item.id ?? ""),
+        codigo: String(item.codigo ?? ""),
+        nombre: String(item.nombre ?? ""),
+        precio: String(item.precioConImp ?? ""),
+        stock: String(item.stock ?? ""),
+        familia: String(familia?.nombre ?? ""),
+        publicar: String(item.publicar ?? ""),
+      };
+    }
+    if (kind === "stock") {
+      return {
+        articuloId: String(item.articuloId ?? ""),
+        codigo: String(item.articuloCodigo ?? ""),
+        nombre: String(item.articuloNombre ?? ""),
+        stock: String(item.stock ?? ""),
+        publicar: String(item.publicar ?? ""),
+      };
+    }
+    if (kind === "familias") {
+      return {
+        id: String(item.id ?? ""),
+        codigo: String(item.codigo ?? ""),
+        nombre: String(item.nombre ?? ""),
+        activa: String(item.activa ?? ""),
+      };
+    }
+    return {
+      articuloId: String(item.articuloId ?? ""),
+      codigo: String(item.articuloCodigo ?? ""),
+      nombre: String(item.articuloNombre ?? ""),
+      tieneImagen: String(item.tieneImagen ?? ""),
+      chars: String(item.imagenBase64Chars ?? ""),
+    };
+  });
+}
+
 export default function AdminEmPage() {
   const [status, setStatus] = useState<EmStatus | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<unknown>(null);
+  const [remoteKind, setRemoteKind] = useState<RemoteKind>("clientes");
+  const [clientsAll, setClientsAll] = useState(false);
+  const [remote, setRemote] = useState<RemoteListResponse | null>(null);
 
   function load() {
     const token = getAdminToken();
@@ -78,6 +160,28 @@ export default function AdminEmPage() {
     }
   }
 
+  async function loadRemote(kind: RemoteKind = remoteKind) {
+    const token = getAdminToken();
+    if (!token) return;
+    setBusy(`Ver ${kind}`);
+    setMessage(null);
+    try {
+      const result = await apiFetch<RemoteListResponse>(remotePath(kind, clientsAll), { token });
+      setRemote(result);
+      setLastResult(result);
+      setMessage(`Remoto ${kind}: ${result.count} registros (mostrando ${result.items.length})`);
+    } catch (error) {
+      const text = error instanceof ApiError ? error.message : "Error";
+      setMessage(`Remoto ${kind}: ${text}`);
+      setRemote(null);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const rows = remote ? previewRows(remoteKind, remote.items) : [];
+  const columns = rows[0] ? Object.keys(rows[0]) : [];
+
   return (
     <AdminGate>
       <AdminShell title="Easy Management">
@@ -111,19 +215,86 @@ export default function AdminEmPage() {
                 <span className="text-cream">{status.terminal}</span> · Usuario{" "}
                 <span className="text-cream">{status.usuario}</span>
               </p>
-              <p className="mt-1 text-cream/50">
-                Auth: header Authorization Bearer. Si Solo web=sí y EM no marca publicarWeb, el sync trae 0
-                productos.
-              </p>
-              <p>
-                Brand / categoría default:{" "}
-                <span className="text-cream">
-                  {status.defaultBrand} / {status.defaultCategory}
-                </span>
-              </p>
               <p className="mt-2 text-cream/50">
                 Configurá `EM_*` en el `.env` del API (Railway). El front nunca habla con HYC.
               </p>
+            </div>
+
+            <div>
+              <h2 className="mb-3 font-serif text-2xl">Ver datos en Easy Management</h2>
+              <p className="mb-3 text-sm text-cream/50">
+                Esto consulta HYC en vivo (no escribe en Postgres). El sync de abajo es lo que publica en la tienda.
+              </p>
+              <div className="mb-3 flex flex-wrap gap-2">
+                {remoteTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    disabled={Boolean(busy)}
+                    onClick={() => setRemoteKind(tab.id)}
+                    className={
+                      remoteKind === tab.id
+                        ? "bg-gold px-3 py-2 text-sm text-black"
+                        : "border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
+                    }
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              {remoteKind === "clientes" ? (
+                <label className="mb-3 flex items-center gap-2 text-sm text-cream/70">
+                  <input
+                    type="checkbox"
+                    checked={clientsAll}
+                    onChange={(e) => setClientsAll(e.target.checked)}
+                  />
+                  Incluir inactivos (`/listar/all`)
+                </label>
+              ) : null}
+              <button
+                type="button"
+                disabled={Boolean(busy)}
+                onClick={() => loadRemote(remoteKind)}
+                className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
+              >
+                Cargar {remoteTabs.find((t) => t.id === remoteKind)?.label}
+              </button>
+
+              {remote ? (
+                <div className="mt-4 overflow-x-auto border border-white/10">
+                  <p className="border-b border-white/10 px-3 py-2 text-xs text-cream/50">
+                    Total EM: {remote.count} · mostrando {remote.items.length}
+                    {remote.limit != null ? ` (limit ${remote.limit}, offset ${remote.offset ?? 0})` : ""}
+                  </p>
+                  {rows.length === 0 ? (
+                    <p className="p-4 text-sm text-cream/50">Sin filas.</p>
+                  ) : (
+                    <table className="min-w-full text-left text-xs text-cream/80">
+                      <thead className="bg-white/5 text-cream/50">
+                        <tr>
+                          {columns.map((col) => (
+                            <th key={col} className="px-3 py-2 font-medium uppercase tracking-wider">
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/10">
+                        {rows.map((row, index) => (
+                          <tr key={index}>
+                            {columns.map((col) => (
+                              <td key={col} className="max-w-[16rem] truncate px-3 py-2">
+                                {row[col]}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              ) : null}
             </div>
 
             <div className="flex flex-wrap gap-2">
