@@ -36,6 +36,8 @@ function serializeClient(
     salonName: string;
     email: string | null;
     status: string;
+    emClienteId?: string | null;
+    emCodigo?: string | null;
     createdAt: Date;
     updatedAt: Date;
     promoCodes?: Array<{
@@ -61,6 +63,8 @@ function serializeClient(
     salonName: client.salonName,
     email: client.email,
     status: client.status,
+    emClienteId: client.emClienteId ?? null,
+    emCodigo: client.emCodigo ?? null,
     createdAt: client.createdAt,
     updatedAt: client.updatedAt,
     hasActiveDiscount: Boolean(activePromo),

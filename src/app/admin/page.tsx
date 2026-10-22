@@ -15,6 +15,7 @@ type Stats = {
   revenue: number;
   pendingClients?: number;
   activeClients?: number;
+  importedClients?: number;
   recent: Array<{
     id: string;
     publicId: string;
@@ -41,12 +42,17 @@ export default function AdminDashboardPage() {
           <p className="text-cream/50">Cargando…</p>
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {[
                 { label: "Productos", value: String(stats.products) },
                 { label: "Pedidos", value: String(stats.orders) },
                 { label: "Clientes pendientes", value: String(stats.pendingClients ?? 0), href: "/admin/clientes" },
                 { label: "Clientes activos", value: String(stats.activeClients ?? 0), href: "/admin/clientes" },
+                {
+                  label: "Generales importados",
+                  value: String(stats.importedClients ?? 0),
+                  href: "/admin/clientes",
+                },
                 { label: "Códigos libres", value: String(stats.unusedCodes) },
                 { label: "Facturado", value: formatPrice(stats.revenue) },
               ].map((card) => (

@@ -283,7 +283,7 @@ export default function AdminEmPage() {
             <div>
               <h2 className="mb-2 font-serif text-2xl">Actualizar la tienda</h2>
               <p className="mb-3 text-sm text-cream/50">
-                Trae productos, stock e imágenes a la web, o vinculá clientes ya registrados.
+                Trae productos, stock e imágenes a la web, e importa clientes generales del sistema.
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -321,10 +321,10 @@ export default function AdminEmPage() {
                 <button
                   type="button"
                   disabled={Boolean(busy)}
-                  onClick={() => run("Vincular clientes", "/em/sync/clients")}
+                  onClick={() => run("Importar clientes", "/em/sync/clients")}
                   className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
                 >
-                  Vincular clientes
+                  Importar clientes
                 </button>
                 <button
                   type="button"

@@ -19,13 +19,14 @@ type ClientRow = {
   salonName: string;
   email: string | null;
   status: string;
+  emCodigo?: string | null;
   createdAt: string;
   hasActiveDiscount: boolean;
   activeDiscount: { code: string; percent: number } | null;
   referredBy: { id: string; name: string; salonName: string } | null;
 };
 
-type Tab = "pending" | "active";
+type Tab = "pending" | "active" | "imported";
 
 export default function AdminClientsPage() {
   const [tab, setTab] = useState<Tab>("pending");
@@ -50,10 +51,11 @@ export default function AdminClientsPage() {
     load(tab);
   }, [tab]);
 
-  const title = useMemo(
-    () => (tab === "pending" ? "Pendientes de aceptar" : "Clientes activos"),
-    [tab],
-  );
+  const title = useMemo(() => {
+    if (tab === "pending") return "Pendientes de aceptar";
+    if (tab === "active") return "Clientes activos";
+    return "Clientes generales importados";
+  }, [tab]);
 
   async function approve(client: ClientRow) {
     const token = getAdminToken();
@@ -88,13 +90,17 @@ export default function AdminClientsPage() {
       }
 
       toast.success(`${client.name} aceptado — se abrió WhatsApp`);
-      setClients((list) =>
-        list.map((c) =>
-          c.id === client.id
-            ? { ...result.client, phone: client.phone, name: client.name, referredBy: client.referredBy }
-            : c,
-        ),
-      );
+      if (tab === "imported") {
+        setClients((list) => list.filter((c) => c.id !== client.id));
+      } else {
+        setClients((list) =>
+          list.map((c) =>
+            c.id === client.id
+              ? { ...result.client, phone: client.phone, name: client.name, referredBy: client.referredBy }
+              : c,
+          ),
+        );
+      }
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "No se pudo aceptar");
     } finally {
@@ -149,9 +155,23 @@ export default function AdminClientsPage() {
           >
             Activos
           </Button>
+          <Button
+            type="button"
+            variant={tab === "imported" ? "gold" : "outline"}
+            className={tab !== "imported" ? "border-white/20 text-cream" : undefined}
+            onClick={() => setTab("imported")}
+          >
+            Generales importados
+          </Button>
         </div>
 
         <p className="mb-4 text-sm text-cream/50">{title}</p>
+        {tab === "imported" ? (
+          <p className="mb-4 text-sm text-cream/40">
+            Traídos del sistema de gestión. No pueden iniciar sesión en la tienda hasta que los aceptes como
+            clientes activos.
+          </p>
+        ) : null}
 
         {loading ? (
           <p className="text-cream/50">Cargando…</p>
@@ -167,6 +187,9 @@ export default function AdminClientsPage() {
                     <div>
                       <h2 className="font-serif text-xl text-cream">{client.name}</h2>
                       <p className="mt-1 text-sm text-cream/60">{client.salonName}</p>
+                      {client.emCodigo ? (
+                        <p className="mt-1 text-xs text-cream/40">Código sistema: {client.emCodigo}</p>
+                      ) : null}
                       {client.referredBy ? (
                         <p className="mt-2 text-sm text-gold">
                           Pidió el alta gracias a {client.referredBy.name}
@@ -180,6 +203,8 @@ export default function AdminClientsPage() {
                       </span>
                     ) : tab === "active" ? (
                       <span className="text-xs text-cream/40">Sin código activo</span>
+                    ) : tab === "imported" ? (
+                      <span className="rounded-sm bg-white/10 px-2 py-1 text-xs text-cream/60">Importado</span>
                     ) : null}
                   </div>
 
@@ -227,6 +252,16 @@ export default function AdminClientsPage() {
                           Rechazar
                         </Button>
                       </>
+                    ) : null}
+
+                    {tab === "imported" ? (
+                      <Button
+                        type="button"
+                        disabled={approvingId === client.id}
+                        onClick={() => void approve(client)}
+                      >
+                        {approvingId === client.id ? "Activando…" : "Pasar a activo"}
+                      </Button>
                     ) : null}
 
                     {wa ? (
