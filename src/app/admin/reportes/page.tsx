@@ -118,7 +118,7 @@ export default function AdminReportsPage() {
       <AdminShell title="Reportes">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <p className="max-w-xl text-sm text-cream/55">
-            Pedidos, demoras, miradas de productos y visitas de la tienda. Las visitas empiezan a contarse desde este deploy.
+            Pedidos, demoras, miradas de productos y visitas de la tienda.
           </p>
           <div className="flex flex-wrap gap-2">
             {periods.map((period) => (

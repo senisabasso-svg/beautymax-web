@@ -108,12 +108,13 @@ export default function AdminOrdersPage() {
                 </ul>
                 <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-white/10 pt-3 text-xs text-cream/50">
                   <span>
-                    EM:{" "}
+                    Sistema:{" "}
                     <span className="text-cream/80">
-                      {order.emSyncStatus || "sin enviar"}
-                      {order.emNroDoc
-                        ? ` · ${order.emTerminal || ""}/${order.emTipoDoc || ""}/${order.emNroDoc}`
-                        : ""}
+                      {order.emSyncStatus === "synced"
+                        ? `enviado${order.emNroDoc ? ` · doc ${order.emNroDoc}` : ""}`
+                        : order.emSyncStatus === "error"
+                          ? "error al enviar"
+                          : "sin enviar"}
                     </span>
                   </span>
                   {order.emSyncError ? <span className="text-red-300">{order.emSyncError}</span> : null}
@@ -123,7 +124,7 @@ export default function AdminOrdersPage() {
                       onClick={() => pushEm(order.id)}
                       className="text-gold underline-offset-2 hover:underline"
                     >
-                      Enviar a EM
+                      Enviar al sistema
                     </button>
                   ) : null}
                 </div>

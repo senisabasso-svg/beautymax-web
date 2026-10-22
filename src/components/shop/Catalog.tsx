@@ -262,7 +262,7 @@ export function Catalog({
                   {qParam ? `No encontramos resultados para «${qParam}».` : "Todavía no hay productos en esta selección."}
                 </p>
                 <p className="mx-auto mt-3 max-w-md text-sm text-muted">
-                  Si acabás de sincronizar Easy Management, revisá Admin → Productos. Las fichas se generan al redesplegar el sitio.
+                  Probá con otra búsqueda o escribinos: te armamos el pedido con lo que uses en el salón.
                 </p>
                 <button
                   type="button"

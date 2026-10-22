@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/api/client";
 import { replaceCatalog } from "@/lib/catalog";
 import type { Product } from "@/types/product";
 
-/** Hidrata el catálogo cliente desde Railway para carrito, búsqueda y stock. */
+/** Hidrata el catálogo en el cliente para carrito, búsqueda y stock. */
 export function CatalogHydrator() {
   useEffect(() => {
     let cancelled = false;

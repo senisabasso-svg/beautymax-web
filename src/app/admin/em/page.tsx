@@ -44,16 +44,22 @@ type RemoteListResponse = {
   limit?: number;
   offset?: number;
   items: Array<Record<string, unknown>>;
-  filtros?: Record<string, unknown>;
 };
 
 const remoteTabs: Array<{ id: RemoteKind; label: string }> = [
-  { id: "clientes", label: "Clientes EM" },
-  { id: "articulos", label: "Artículos EM" },
-  { id: "stock", label: "Stock EM" },
+  { id: "clientes", label: "Clientes" },
+  { id: "articulos", label: "Productos" },
+  { id: "stock", label: "Stock" },
   { id: "familias", label: "Familias" },
   { id: "imagenes", label: "Imágenes" },
 ];
+
+const cursorLabels: Record<string, string> = {
+  products: "Productos",
+  stock: "Stock",
+  images: "Imágenes",
+  clients: "Clientes",
+};
 
 function remotePath(kind: RemoteKind, clientsAll: boolean) {
   if (kind === "clientes") {
@@ -65,54 +71,48 @@ function remotePath(kind: RemoteKind, clientsAll: boolean) {
   return "/em/remote/imagenes?full=1&limit=200&offset=0";
 }
 
-function previewRows(kind: RemoteKind, items: Array<Record<string, unknown>>) {
+function previewRows(kind: RemoteKind, items: Array<Record<string, unknown>>): Array<Record<string, string>> {
   return items.map((item) => {
+    let row: Record<string, string>;
     if (kind === "clientes") {
-      return {
-        id: String(item.id ?? ""),
-        codigo: String(item.codigo ?? ""),
-        nombre: String(item.nombre ?? ""),
-        documento: String(item.documento ?? ""),
-        ciudad: String(item.ciudad ?? ""),
-        activo: String(item.activo ?? ""),
+      row = {
+        Código: String(item.codigo ?? ""),
+        Nombre: String(item.nombre ?? ""),
+        Documento: String(item.documento ?? ""),
+        Ciudad: String(item.ciudad ?? ""),
+        Activo: item.activo === false ? "No" : "Sí",
       };
-    }
-    if (kind === "articulos") {
+    } else if (kind === "articulos") {
       const familia = item.familia as { nombre?: string } | null | undefined;
-      return {
-        id: String(item.id ?? ""),
-        codigo: String(item.codigo ?? ""),
-        nombre: String(item.nombre ?? ""),
-        precio: String(item.precioConImp ?? ""),
-        stock: String(item.stock ?? ""),
-        familia: String(familia?.nombre ?? ""),
-        publicar: String(item.publicar ?? ""),
+      row = {
+        Código: String(item.codigo ?? ""),
+        Nombre: String(item.nombre ?? ""),
+        Precio: String(item.precioConImp ?? ""),
+        Stock: String(item.stock ?? ""),
+        Familia: String(familia?.nombre ?? ""),
+        Web: item.publicar ? "Sí" : "No",
+      };
+    } else if (kind === "stock") {
+      row = {
+        Código: String(item.articuloCodigo ?? ""),
+        Nombre: String(item.articuloNombre ?? ""),
+        Stock: String(item.stock ?? ""),
+        Web: item.publicar ? "Sí" : "No",
+      };
+    } else if (kind === "familias") {
+      row = {
+        Código: String(item.codigo ?? ""),
+        Nombre: String(item.nombre ?? ""),
+        Activa: item.activa === false ? "No" : "Sí",
+      };
+    } else {
+      row = {
+        Código: String(item.articuloCodigo ?? ""),
+        Nombre: String(item.articuloNombre ?? ""),
+        Imagen: item.tieneImagen ? "Sí" : "No",
       };
     }
-    if (kind === "stock") {
-      return {
-        articuloId: String(item.articuloId ?? ""),
-        codigo: String(item.articuloCodigo ?? ""),
-        nombre: String(item.articuloNombre ?? ""),
-        stock: String(item.stock ?? ""),
-        publicar: String(item.publicar ?? ""),
-      };
-    }
-    if (kind === "familias") {
-      return {
-        id: String(item.id ?? ""),
-        codigo: String(item.codigo ?? ""),
-        nombre: String(item.nombre ?? ""),
-        activa: String(item.activa ?? ""),
-      };
-    }
-    return {
-      articuloId: String(item.articuloId ?? ""),
-      codigo: String(item.articuloCodigo ?? ""),
-      nombre: String(item.articuloNombre ?? ""),
-      tieneImagen: String(item.tieneImagen ?? ""),
-      chars: String(item.imagenBase64Chars ?? ""),
-    };
+    return row;
   });
 }
 
@@ -120,7 +120,6 @@ export default function AdminEmPage() {
   const [status, setStatus] = useState<EmStatus | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [lastResult, setLastResult] = useState<unknown>(null);
   const [remoteKind, setRemoteKind] = useState<RemoteKind>("clientes");
   const [clientsAll, setClientsAll] = useState(false);
   const [remote, setRemote] = useState<RemoteListResponse | null>(null);
@@ -142,18 +141,16 @@ export default function AdminEmPage() {
     if (!token) return;
     setBusy(action);
     setMessage(null);
-    setLastResult(null);
     try {
-      const result = await apiFetch<unknown>(path, {
+      await apiFetch<unknown>(path, {
         method: "POST",
         token,
         body: body ? JSON.stringify(body) : undefined,
       });
-      setLastResult(result);
-      setMessage(`${action}: ok`);
+      setMessage(`${action} listo.`);
       load();
     } catch (error) {
-      const text = error instanceof ApiError ? error.message : "Error";
+      const text = error instanceof ApiError ? error.message : "No se pudo completar";
       setMessage(`${action}: ${text}`);
     } finally {
       setBusy(null);
@@ -163,16 +160,15 @@ export default function AdminEmPage() {
   async function loadRemote(kind: RemoteKind = remoteKind) {
     const token = getAdminToken();
     if (!token) return;
-    setBusy(`Ver ${kind}`);
+    setBusy(`Cargar ${kind}`);
     setMessage(null);
     try {
       const result = await apiFetch<RemoteListResponse>(remotePath(kind, clientsAll), { token });
       setRemote(result);
-      setLastResult(result);
-      setMessage(`Remoto ${kind}: ${result.count} registros (mostrando ${result.items.length})`);
+      setMessage(`${result.count} registros encontrados.`);
     } catch (error) {
-      const text = error instanceof ApiError ? error.message : "Error";
-      setMessage(`Remoto ${kind}: ${text}`);
+      const text = error instanceof ApiError ? error.message : "No se pudo cargar";
+      setMessage(text);
       setRemote(null);
     } finally {
       setBusy(null);
@@ -184,17 +180,19 @@ export default function AdminEmPage() {
 
   return (
     <AdminGate>
-      <AdminShell title="Easy Management">
+      <AdminShell title="Gestión">
         {!status ? (
           <p className="text-cream/50">Cargando…</p>
         ) : (
           <div className="space-y-8">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
-                { label: "Integración", value: status.enabled ? "Activa" : "Apagada" },
-                { label: "Configurada", value: status.configured ? "Sí" : "Faltan variables" },
-                { label: "Envío pedidos", value: status.orderPushReady ? "Listo" : "Falta tipo doc" },
-                { label: "Auto push", value: status.autoPushOrders ? "Sí" : "No" },
+                { label: "Conexión", value: status.enabled && status.configured ? "Activa" : "Inactiva" },
+                {
+                  label: "Pedidos al sistema",
+                  value: status.orderPushReady ? "Listo" : "Pendiente de configurar",
+                },
+                { label: "Envío automático", value: status.autoPushOrders ? "Sí" : "No" },
               ].map((card) => (
                 <div key={card.label} className="border border-white/10 bg-white/5 p-4">
                   <p className="text-xs uppercase tracking-wider text-cream/50">{card.label}</p>
@@ -203,27 +201,10 @@ export default function AdminEmPage() {
               ))}
             </div>
 
-            <div className="border border-white/10 bg-white/5 p-4 text-sm text-cream/70">
-              <p>
-                Lista de precio: <span className="text-cream">{status.listaPrecio || "—"}</span>
-              </p>
-              <p>
-                Depósito: <span className="text-cream">{status.deposito || "default"}</span>
-              </p>
-              <p>
-                Solo web: <span className="text-cream">{status.soloWeb ? "sí" : "no"}</span> · Terminal{" "}
-                <span className="text-cream">{status.terminal}</span> · Usuario{" "}
-                <span className="text-cream">{status.usuario}</span>
-              </p>
-              <p className="mt-2 text-cream/50">
-                Configurá `EM_*` en el `.env` del API (Railway). El front nunca habla con HYC.
-              </p>
-            </div>
-
             <div>
-              <h2 className="mb-3 font-serif text-2xl">Ver datos en Easy Management</h2>
+              <h2 className="mb-2 font-serif text-2xl">Consultar sistema</h2>
               <p className="mb-3 text-sm text-cream/50">
-                Esto consulta HYC en vivo (no escribe en Postgres). El sync de abajo es lo que publica en la tienda.
+                Mirás lo que hay en el sistema de gestión, sin cambiar la tienda todavía.
               </p>
               <div className="mb-3 flex flex-wrap gap-2">
                 {remoteTabs.map((tab) => (
@@ -231,7 +212,10 @@ export default function AdminEmPage() {
                     key={tab.id}
                     type="button"
                     disabled={Boolean(busy)}
-                    onClick={() => setRemoteKind(tab.id)}
+                    onClick={() => {
+                      setRemoteKind(tab.id);
+                      setRemote(null);
+                    }}
                     className={
                       remoteKind === tab.id
                         ? "bg-gold px-3 py-2 text-sm text-black"
@@ -249,7 +233,7 @@ export default function AdminEmPage() {
                     checked={clientsAll}
                     onChange={(e) => setClientsAll(e.target.checked)}
                   />
-                  Incluir inactivos (`/listar/all`)
+                  Incluir inactivos
                 </label>
               ) : null}
               <button
@@ -258,17 +242,16 @@ export default function AdminEmPage() {
                 onClick={() => loadRemote(remoteKind)}
                 className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
               >
-                Cargar {remoteTabs.find((t) => t.id === remoteKind)?.label}
+                Cargar {remoteTabs.find((t) => t.id === remoteKind)?.label?.toLowerCase()}
               </button>
 
               {remote ? (
                 <div className="mt-4 overflow-x-auto border border-white/10">
                   <p className="border-b border-white/10 px-3 py-2 text-xs text-cream/50">
-                    Total EM: {remote.count} · mostrando {remote.items.length}
-                    {remote.limit != null ? ` (limit ${remote.limit}, offset ${remote.offset ?? 0})` : ""}
+                    {remote.count} en total · mostrando {remote.items.length}
                   </p>
                   {rows.length === 0 ? (
-                    <p className="p-4 text-sm text-cream/50">Sin filas.</p>
+                    <p className="p-4 text-sm text-cream/50">No hay resultados.</p>
                   ) : (
                     <table className="min-w-full text-left text-xs text-cream/80">
                       <thead className="bg-white/5 text-cream/50">
@@ -297,66 +280,71 @@ export default function AdminEmPage() {
               ) : null}
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={Boolean(busy)}
-                onClick={() => run("Ping", "/em/ping")}
-                className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
-              >
-                Probar conexión
-              </button>
-              <button
-                type="button"
-                disabled={Boolean(busy)}
-                onClick={() => run("Productos", "/em/sync/products", { full: true })}
-                className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
-              >
-                Sync productos (full)
-              </button>
-              <button
-                type="button"
-                disabled={Boolean(busy)}
-                onClick={() => run("Stock", "/em/sync/stock")}
-                className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
-              >
-                Sync stock
-              </button>
-              <button
-                type="button"
-                disabled={Boolean(busy)}
-                onClick={() => run("Imágenes", "/em/sync/images")}
-                className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
-              >
-                Sync imágenes
-              </button>
-              <button
-                type="button"
-                disabled={Boolean(busy)}
-                onClick={() => run("Clientes", "/em/sync/clients")}
-                className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
-              >
-                Vincular clientes
-              </button>
-              <button
-                type="button"
-                disabled={Boolean(busy)}
-                onClick={() => run("Todo", "/em/sync/all", { full: true })}
-                className="bg-gold px-3 py-2 text-sm text-black disabled:opacity-50"
-              >
-                Sync completo
-              </button>
+            <div>
+              <h2 className="mb-2 font-serif text-2xl">Actualizar la tienda</h2>
+              <p className="mb-3 text-sm text-cream/50">
+                Trae productos, stock e imágenes a la web, o vinculá clientes ya registrados.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={Boolean(busy)}
+                  onClick={() => run("Probar conexión", "/em/ping")}
+                  className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
+                >
+                  Probar conexión
+                </button>
+                <button
+                  type="button"
+                  disabled={Boolean(busy)}
+                  onClick={() => run("Actualizar productos", "/em/sync/products", { full: true })}
+                  className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
+                >
+                  Actualizar productos
+                </button>
+                <button
+                  type="button"
+                  disabled={Boolean(busy)}
+                  onClick={() => run("Actualizar stock", "/em/sync/stock")}
+                  className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
+                >
+                  Actualizar stock
+                </button>
+                <button
+                  type="button"
+                  disabled={Boolean(busy)}
+                  onClick={() => run("Actualizar imágenes", "/em/sync/images")}
+                  className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
+                >
+                  Actualizar imágenes
+                </button>
+                <button
+                  type="button"
+                  disabled={Boolean(busy)}
+                  onClick={() => run("Vincular clientes", "/em/sync/clients")}
+                  className="border border-white/20 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
+                >
+                  Vincular clientes
+                </button>
+                <button
+                  type="button"
+                  disabled={Boolean(busy)}
+                  onClick={() => run("Actualización completa", "/em/sync/all", { full: true })}
+                  className="bg-gold px-3 py-2 text-sm text-black disabled:opacity-50"
+                >
+                  Actualizar todo
+                </button>
+              </div>
             </div>
 
-            {busy ? <p className="text-sm text-cream/50">Ejecutando: {busy}…</p> : null}
+            {busy ? <p className="text-sm text-cream/50">Trabajando…</p> : null}
             {message ? <p className="text-sm text-gold">{message}</p> : null}
 
             <div>
-              <h2 className="mb-3 font-serif text-2xl">Cursores</h2>
+              <h2 className="mb-3 font-serif text-2xl">Últimas actualizaciones</h2>
               {!status.cursors.some((c) => c.id === "products") ? (
                 <p className="mb-3 border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100">
-                  Todavía no hay sync de productos. Tocá <strong>Sync productos (full)</strong> — vincular clientes no
-                  publica el catálogo en la tienda.
+                  Todavía no se actualizaron los productos de la tienda. Usá <strong>Actualizar productos</strong>.
                 </p>
               ) : null}
               {status.cursors.length > 0 ? (
@@ -372,15 +360,18 @@ export default function AdminEmPage() {
                     }
                     return (
                       <div key={cursor.id} className="p-4 text-sm">
-                        <p className="font-medium text-cream">{cursor.id}</p>
+                        <p className="font-medium text-cream">
+                          {cursorLabels[cursor.id] ?? cursor.id}
+                        </p>
                         <p className="text-cream/50">
-                          Último: {cursor.lastAt ? new Date(cursor.lastAt).toLocaleString("es-UY") : "—"}
+                          Última vez:{" "}
+                          {cursor.lastAt ? new Date(cursor.lastAt).toLocaleString("es-UY") : "—"}
                         </p>
                         {summary ? (
                           <p className="text-cream/60">
-                            fetched {summary.fetched} · +{summary.created} · ~{summary.updated} · skip{" "}
-                            {summary.skipped}
-                            {summary.errors?.length ? ` · errores ${summary.errors.length}` : ""}
+                            Leídos {summary.fetched} · nuevos {summary.created} · actualizados {summary.updated} ·
+                            omitidos {summary.skipped}
+                            {summary.errors?.length ? ` · con aviso ${summary.errors.length}` : ""}
                           </p>
                         ) : null}
                       </div>
@@ -388,15 +379,9 @@ export default function AdminEmPage() {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-cream/50">Sin sincronizaciones todavía.</p>
+                <p className="text-sm text-cream/50">Todavía no hubo actualizaciones.</p>
               )}
             </div>
-
-            {lastResult ? (
-              <pre className="overflow-x-auto border border-white/10 bg-black/40 p-4 text-xs text-cream/70">
-                {JSON.stringify(lastResult, null, 2)}
-              </pre>
-            ) : null}
           </div>
         )}
       </AdminShell>
